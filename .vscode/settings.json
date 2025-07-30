@@ -1,0 +1,15 @@
+{
+  "[yaml]": {
+    "editor.insertSpaces": true,
+    "editor.tabSize": 2,
+    "editor.autoIndent": "keep",
+    "diffEditor.ignoreTrimWhitespace": false,
+    "editor.defaultColorDecorators": "always",
+    "editor.quickSuggestions": {
+      "strings": true,
+      "other": true,
+      "comments": false
+    },
+    "editor.defaultFormatter": "redhat.vscode-yaml"
+  }
+}
