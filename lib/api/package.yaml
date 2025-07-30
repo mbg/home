@@ -1,0 +1,11 @@
+_common: !include "../../common/hpack/lib.yaml"
+
+name: home-api
+<<: *common
+
+library:
+  source-dirs: src
+
+  dependencies:
+    - servant-server
+    - warp

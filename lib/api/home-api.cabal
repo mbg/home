@@ -1,0 +1,44 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.38.1.
+--
+-- see: https://github.com/sol/hpack
+
+name:           home-api
+version:        0.1.0.0
+description:    Please see the README on GitHub at <https://github.com/githubuser/home#readme>
+homepage:       https://github.com/mbg/home#readme
+bug-reports:    https://github.com/mbg/home/issues
+author:         Michael B. Gale
+maintainer:     github@michael-gale.co.uk
+copyright:      2025 Michael B. Gale
+license:        AGPL-3
+build-type:     Simple
+
+source-repository head
+  type: git
+  location: https://github.com/mbg/home
+
+library
+  exposed-modules:
+      Home.API
+  other-modules:
+      Paths_home_api
+  hs-source-dirs:
+      src
+  default-extensions:
+      DataKinds
+      ImportQualifiedPost
+      InstanceSigs
+      MultiParamTypeClasses
+      OverloadedStrings
+      TypeApplications
+      TypeOperators
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
+  build-depends:
+      base >=4.7 && <5
+    , bytestring
+    , servant-server
+    , text
+    , warp
+  default-language: Haskell2010

@@ -21,6 +21,14 @@
 
   default-extensions:
     - DataKinds
+    - ImportQualifiedPost
+    - InstanceSigs
+    - MultiParamTypeClasses
+    - OverloadedStrings
+    - TypeApplications
+    - TypeOperators
 
   dependencies:
     - base >= 4.7 && < 5
+    - bytestring
+    - text
