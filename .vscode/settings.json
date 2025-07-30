@@ -11,5 +11,6 @@
       "comments": false
     },
     "editor.defaultFormatter": "redhat.vscode-yaml"
-  }
+  },
+  "haskell.plugin.explicit-fields.inlayHintsOn": false
 }
