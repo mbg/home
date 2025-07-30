@@ -1,0 +1,7 @@
+services:
+  postgres:
+    image: postgres:17.5
+    environment:
+      - POSTGRES_PASSWORD=development
+    ports:
+      - 5432:5432
