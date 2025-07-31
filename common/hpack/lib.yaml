@@ -25,6 +25,7 @@
     - InstanceSigs
     - MultiParamTypeClasses
     - OverloadedStrings
+    - RecordWildCards
     - TypeApplications
     - TypeOperators
 

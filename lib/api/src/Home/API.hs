@@ -7,9 +7,13 @@ module Home.API (
 
 --------------------------------------------------------------------------------
 
+import Data.Maybe
+
 import Servant
 
 import Network.Wai.Handler.Warp ( run )
+
+import Home.API.Config
 
 --------------------------------------------------------------------------------
 
@@ -28,8 +32,9 @@ server = pure 5
 app :: Application
 app = serve api server
 
--- | `runApiServer` starts the API on port 8080.
-runApiServer :: IO ()
-runApiServer = run 8080 app
+-- | `runApiServer` starts the API on the port given by @cfg@.
+runApiServer :: ApiConfig -> IO ()
+runApiServer cfg = run port app
+    where port = fromMaybe 8080 (apiPort cfg)
 
 --------------------------------------------------------------------------------
