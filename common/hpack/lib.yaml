@@ -21,8 +21,10 @@
 
   default-extensions:
     - DataKinds
+    - DeriveFunctor
     - ImportQualifiedPost
     - InstanceSigs
+    - LambdaCase
     - MultiParamTypeClasses
     - OverloadedStrings
     - RecordWildCards
