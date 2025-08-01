@@ -5,6 +5,7 @@ packages:
   - ./lib/core
   - ./lib/db
   - ./lib/api
+  - ./app/home-api-server
 
 flags:
   network-wait:
