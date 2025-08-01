@@ -21,7 +21,10 @@
 
   default-extensions:
     - DataKinds
+    - DeriveFoldable
     - DeriveFunctor
+    - DeriveTraversable
+    - FlexibleInstances
     - ImportQualifiedPost
     - InstanceSigs
     - LambdaCase

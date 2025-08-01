@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 
-name:           home-api
+name:           home-db
 version:        0.1.0.0
 description:    Please see the README on GitHub at <https://github.com/githubuser/home#readme>
 homepage:       https://github.com/mbg/home#readme
@@ -21,10 +21,10 @@ source-repository head
 
 library
   exposed-modules:
-      Home.API
-      Home.API.Config
+      Home.Db
+      Home.Db.Config
   other-modules:
-      Paths_home_api
+      Paths_home_db
   hs-source-dirs:
       src
   default-extensions:
@@ -41,16 +41,36 @@ library
       RecordWildCards
       TypeApplications
       TypeOperators
+      TemplateHaskell
+      QuasiQuotes
+      TypeFamilies
+      GADTs
+      DerivingStrategies
+      GeneralizedNewtypeDeriving
+      StandaloneDeriving
+      UndecidableInstances
+      FlexibleInstances
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
   build-depends:
       aeson
     , base >=4.7 && <5
     , bytestring
+    , deriving-aeson
     , home-core
-    , home-db
+    , http-api-data
     , monad-logger
-    , servant-server
+    , mtl
+    , network-wait
+    , path-pieces
+    , persistent
+    , persistent-postgresql
+    , postgresql-simple
+    , resource-pool
+    , template-haskell
     , text
-    , warp
+    , transformers
+    , unliftio-core
+    , uuid
+    , uuid-types
     , yaml
   default-language: Haskell2010

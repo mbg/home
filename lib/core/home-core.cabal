@@ -28,7 +28,10 @@ library
       src
   default-extensions:
       DataKinds
+      DeriveFoldable
       DeriveFunctor
+      DeriveTraversable
+      FlexibleInstances
       ImportQualifiedPost
       InstanceSigs
       LambdaCase
@@ -59,7 +62,10 @@ test-suite home-core-tests
       test
   default-extensions:
       DataKinds
+      DeriveFoldable
       DeriveFunctor
+      DeriveTraversable
+      FlexibleInstances
       ImportQualifiedPost
       InstanceSigs
       LambdaCase

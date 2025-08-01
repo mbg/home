@@ -7,13 +7,18 @@ module Home.API (
 
 --------------------------------------------------------------------------------
 
+import Control.Monad.IO.Class
+import Control.Monad.Logger
+
 import Data.Maybe
+import Data.Text
 
 import Servant
 
 import Network.Wai.Handler.Warp ( run )
 
 import Home.API.Config
+import Home.Db
 
 --------------------------------------------------------------------------------
 
@@ -33,8 +38,11 @@ app :: Application
 app = serve api server
 
 -- | `runApiServer` starts the API on the port given by @cfg@.
-runApiServer :: ApiConfig -> IO ()
-runApiServer cfg = run port app
-    where port = fromMaybe 8080 (apiPort cfg)
+runApiServer :: ApiConfig Text -> IO ()
+runApiServer cfg =
+    runStdoutLoggingT $
+    withDatabase (apiPostgres cfg) $ \dbPool -> do
+        liftIO $ run port app
+        where port = fromMaybe 8080 (apiPort cfg)
 
 --------------------------------------------------------------------------------

@@ -1,0 +1,38 @@
+_common: !include "../../common/hpack/lib.yaml"
+
+name: home-db
+<<: *common
+
+library:
+  source-dirs: src
+
+  default-extensions:
+    - TemplateHaskell
+    - QuasiQuotes
+    - TypeFamilies
+    - GADTs
+    - DerivingStrategies
+    - GeneralizedNewtypeDeriving
+    - StandaloneDeriving
+    - UndecidableInstances
+    - FlexibleInstances
+
+  dependencies:
+    - aeson
+    - deriving-aeson
+    - home-core
+    - http-api-data
+    - monad-logger
+    - mtl
+    - network-wait
+    - path-pieces
+    - persistent
+    - persistent-postgresql
+    - postgresql-simple
+    - resource-pool
+    - template-haskell
+    - transformers
+    - unliftio-core
+    - uuid
+    - uuid-types
+    - yaml

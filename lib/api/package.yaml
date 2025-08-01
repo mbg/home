@@ -8,6 +8,9 @@ library:
 
   dependencies:
     - aeson
+    - home-core
+    - home-db
+    - monad-logger
     - servant-server
     - warp
     - yaml

@@ -3,6 +3,7 @@ snapshot:
 
 packages:
   - ./lib/core
+  - ./lib/db
   - ./lib/api
 
 extra-deps: []
