@@ -24,13 +24,15 @@ library:
     - http-api-data
     - monad-logger
     - mtl
-    - network-wait
+    - network-wait >= 0.3
     - path-pieces
     - persistent
     - persistent-postgresql
     - postgresql-simple
     - resource-pool
+    - retry
     - template-haskell
+    - time-units
     - transformers
     - unliftio-core
     - uuid

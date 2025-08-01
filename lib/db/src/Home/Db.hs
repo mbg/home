@@ -3,6 +3,7 @@
 module Home.Db (
     DbPool,
     DbQuery,
+    waitForDb,
     withDatabase,
     withPool,
     runMigration
@@ -10,17 +11,20 @@ module Home.Db (
 
 --------------------------------------------------------------------------------
 
+import Control.Monad
+import Control.Monad.IO.Unlift
 import Control.Monad.Logger
 import Control.Monad.Reader
-import Control.Monad.IO.Unlift
+import Control.Retry
 
 import Data.Pool ( Pool )
 import Data.Text ( Text )
+import Data.Time.Units
 
-import Database.Persist.Sql
 import Database.Persist.Postgresql
 
-import Home.Db.Schema ( migrateAll )
+import Network.Wait.PostgreSQL
+
 import Home.Db.Config
 
 --------------------------------------------------------------------------------
@@ -32,6 +36,16 @@ type DbPool = Pool SqlBackend
 -- | An alias for @`ReaderT` `SqlBackend` `IO`@ to avoid having to write that
 -- whenever a query computation is accepted somewhere.
 type DbQuery = ReaderT SqlBackend IO
+
+-- | `waitForDb` @config@ waits for the server identified by @config@ to
+-- become available and accept connections.
+waitForDb :: DbConfig Text -> IO ()
+waitForDb cfg = do
+    let strategy =
+            exponentialBackoff (fromInteger $ toMicroseconds @Second 5) <>
+            limitRetries 5
+
+    void $ waitPostgreSqlVerbose putStrLn strategy (toConnStr cfg)
 
 -- | `withDatabase` @config cont@ is a utility function which initialises a
 -- database connection pool using the values from @config@ and then runs @cont@

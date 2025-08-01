@@ -6,4 +6,10 @@ packages:
   - ./lib/db
   - ./lib/api
 
-extra-deps: []
+flags:
+  network-wait:
+    postgres: true
+
+extra-deps:
+  - git: git@github.com:mbg/network-wait
+    commit: 6a5e841559e8559da0155a8734b97ab663d49cda
