@@ -37,6 +37,7 @@ library
       DeriveGeneric
       DeriveTraversable
       DerivingVia
+      FlexibleContexts
       FlexibleInstances
       ImportQualifiedPost
       InstanceSigs

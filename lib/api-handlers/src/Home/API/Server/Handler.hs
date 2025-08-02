@@ -5,9 +5,9 @@
 module Home.API.Server.Handler (
     ApiHandler(..),
     fromApiHandler,
+    selectOneOr404,
     -- * Re-exports
     module Servant,
-    module Servant.Server,
     module Home.Db.Types,
     CanRunQuery(..)
 ) where
@@ -18,7 +18,6 @@ import Control.Monad.Except ( MonadError )
 import Control.Monad.Reader
 
 import Servant
-import Servant.Server
 
 import Database.Esqueleto.Experimental
 
@@ -42,6 +41,14 @@ newtype ApiHandler a
 -- to be run in a `Handler` computation.
 fromApiHandler :: ApiContext -> ApiHandler a -> Handler a
 fromApiHandler ctx = flip runReaderT ctx . runApiHandler
+
+-- | `selectOneOr404` @query@ performs @query@ which is expected to return
+-- a single result. If there is none, a HTTP 404 error is raised as a
+-- `ServerError`.
+selectOneOr404
+    :: (CanRunQuery m, MonadError ServerError m, SqlSelect a r)
+    => SqlQuery a -> m r
+selectOneOr404 = selectOneOr (throwError err404)
 
 instance CanRunQuery ApiHandler where
     runQuery :: DbQuery a -> ApiHandler a

@@ -9,7 +9,7 @@ module Home.Db.Types (
 
 --------------------------------------------------------------------------------
 
-import Data.Text
+import Data.Text ( Text )
 
 import Database.Persist
 import Home.Db.UUID

@@ -33,6 +33,7 @@ library
       DeriveGeneric
       DeriveTraversable
       DerivingVia
+      FlexibleContexts
       FlexibleInstances
       ImportQualifiedPost
       InstanceSigs
@@ -70,6 +71,7 @@ test-suite home-core-tests
       DeriveGeneric
       DeriveTraversable
       DerivingVia
+      FlexibleContexts
       FlexibleInstances
       ImportQualifiedPost
       InstanceSigs
