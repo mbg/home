@@ -35,7 +35,14 @@ getMerchant merchantId = do
 
     pure $ fromDbMerchant merchant
 
+-- | `putMerchant` @merchant@ adds @merchant@ to the database and returns
+-- @merchant@ with the assigned key.
+putMerchant :: Merchant -> ApiHandler Merchant
+putMerchant MkMerchant{..} = do
+    newMerchantId <- runQuery $ insert $ Db.Merchant merchantName
+    pure $ MkMerchant (Just newMerchantId) merchantName
+
 merchantHandlers :: ServerT MerchantsAPI ApiHandler
-merchantHandlers = getMerchants :<|> getMerchant
+merchantHandlers = getMerchants :<|> getMerchant :<|> putMerchant
 
 --------------------------------------------------------------------------------

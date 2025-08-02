@@ -28,5 +28,7 @@ type MerchantsAPI
     = Get '[JSON] [Merchant]
  :<|> Capture "id" (Key Db.Merchant) :>
       Get '[JSON] (Merchant)
+ :<|> ReqBody '[JSON] Merchant :>
+      Put '[JSON] Merchant
 
 --------------------------------------------------------------------------------
