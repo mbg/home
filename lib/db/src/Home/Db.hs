@@ -53,7 +53,7 @@ waitForDb cfg = do
 -- returns.
 withDatabase
     :: (MonadLoggerIO m, MonadUnliftIO m)
-    => DbConfig Text -> (Pool SqlBackend -> m a) -> m a
+    => DbConfig Text -> (DbPool -> m a) -> m a
 withDatabase cfg =
     withPostgresqlPool (toConnStr cfg) poolSize
     where poolSize = 10 -- dbConfigPoolSize cfg

@@ -22,6 +22,8 @@ source-repository head
 library
   exposed-modules:
       Home.API.Server
+      Home.API.Server.Context
+      Home.API.Server.Handler
   other-modules:
       Paths_home_api_handlers
   hs-source-dirs:
@@ -53,6 +55,7 @@ library
     , home-core
     , home-db
     , monad-logger
+    , mtl
     , servant-server
     , text
     , warp

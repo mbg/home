@@ -9,10 +9,11 @@ library:
   dependencies:
     - aeson
     - deriving-aeson
+    - home-api
     - home-core
     - home-db
-    - home-api
     - monad-logger
+    - mtl
     - servant-server
     - warp
     - yaml
