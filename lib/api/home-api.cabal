@@ -31,10 +31,13 @@ library
       DataKinds
       DeriveFoldable
       DeriveFunctor
+      DeriveGeneric
       DeriveTraversable
+      DerivingVia
       FlexibleInstances
       ImportQualifiedPost
       InstanceSigs
+      KindSignatures
       LambdaCase
       MultiParamTypeClasses
       OverloadedStrings

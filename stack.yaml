@@ -5,6 +5,7 @@ packages:
   - ./lib/core
   - ./lib/db
   - ./lib/api
+  - ./lib/api-handlers
   - ./app/home-api-server
   # - ../home-assistant-client
 

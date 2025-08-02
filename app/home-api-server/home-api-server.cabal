@@ -29,10 +29,13 @@ executable home-api-server
       DataKinds
       DeriveFoldable
       DeriveFunctor
+      DeriveGeneric
       DeriveTraversable
+      DerivingVia
       FlexibleInstances
       ImportQualifiedPost
       InstanceSigs
+      KindSignatures
       LambdaCase
       MultiParamTypeClasses
       OverloadedStrings
@@ -44,6 +47,7 @@ executable home-api-server
       base >=4.7 && <5
     , bytestring
     , home-api
+    , home-api-handlers
     , home-core
     , home-db
     , text

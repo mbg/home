@@ -1,0 +1,18 @@
+_common: !include "../../common/hpack/lib.yaml"
+
+name: home-api-handlers
+<<: *common
+
+library:
+  source-dirs: src
+
+  dependencies:
+    - aeson
+    - deriving-aeson
+    - home-core
+    - home-db
+    - home-api
+    - monad-logger
+    - servant-server
+    - warp
+    - yaml

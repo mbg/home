@@ -14,6 +14,7 @@ COPY common/hpack/lib.yaml /work/common/hpack/lib.yaml
 COPY lib/core/package.yaml /work/lib/core/package.yaml
 COPY lib/db/package.yaml /work/lib/db/package.yaml
 COPY lib/api/package.yaml /work/lib/api/package.yaml
+COPY lib/api-handlers/package.yaml /work/lib/api-handlers/package.yaml
 COPY app/home-api-server/package.yaml /work/app/home-api-server/package.yaml
 
 RUN ls -lah
