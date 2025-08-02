@@ -23,6 +23,7 @@ library
   exposed-modules:
       Home.Db
       Home.Db.Config
+      Home.Db.Types
   other-modules:
       Paths_home_db
   hs-source-dirs:
