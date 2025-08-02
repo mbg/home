@@ -7,10 +7,12 @@ module Main ( main ) where
 import Data.Text ( Text )
 
 import System.Exit ( exitFailure )
+import System.IO
 
 import Home.Config.SecretSource
 import Home.API (runApiServer)
 import Home.API.Config
+import Home.Db
 
 --------------------------------------------------------------------------------
 
@@ -36,12 +38,17 @@ resolveSecretOrFail s = resolveSecret s >>= \case
 -- | `main` is the main entry point for the API server program.
 main :: IO ()
 main = do
-    cfg <- readConfig "config/home.yaml"
+    hSetBuffering stdout LineBuffering
+    hSetBuffering stderr LineBuffering
 
-    cfg' <- traverse resolveSecretOrFail cfg
+    cfg <- readConfig "config/home.yaml" >>=
+            traverse resolveSecretOrFail
 
-    waitForDb (apiPostgres cfg')
+    waitForDb (apiPostgres cfg)
 
-    runApiServer cfg'
+    putStrLn "Starting server..."
+    runApiServer cfg
+
+    putStrLn "Exiting server..."
 
 --------------------------------------------------------------------------------

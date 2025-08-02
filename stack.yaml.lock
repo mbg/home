@@ -6,7 +6,7 @@
 packages:
 - completed:
     commit: 6a5e841559e8559da0155a8734b97ab663d49cda
-    git: git@github.com:mbg/network-wait
+    git: https://github.com/mbg/network-wait
     name: network-wait
     pantry-tree:
       sha256: 5da1fe63f5f4ab4da220e602fb5eae3dbc1c4ace9699d50761617f28fb79654c
@@ -14,7 +14,7 @@ packages:
     version: 0.3.0.0
   original:
     commit: 6a5e841559e8559da0155a8734b97ab663d49cda
-    git: git@github.com:mbg/network-wait
+    git: https://github.com/mbg/network-wait
 snapshots:
 - completed:
     sha256: a033deeac115f963c6a976aeb8407595a196ac8cff629847488ebf504af5bbaf

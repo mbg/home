@@ -1,0 +1,7 @@
+.git
+.stack-work
+.vscode
+config
+util
+.editorconfig
+docker-compose*.yaml

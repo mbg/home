@@ -1,0 +1,9 @@
+services:
+  home:
+    image: home:latest
+    environment:
+      - HOME_POSTGRES_PASSWORD=development
+    volumes:
+      - ./util/config:/app/config:ro
+    ports:
+      - 8080:8080
