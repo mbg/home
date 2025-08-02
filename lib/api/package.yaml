@@ -8,6 +8,7 @@ library:
 
   dependencies:
     - aeson
+    - deriving-aeson
     - home-core
     - home-db
     - monad-logger

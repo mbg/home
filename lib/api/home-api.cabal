@@ -23,6 +23,7 @@ library
   exposed-modules:
       Home.API
       Home.API.Config
+      Home.API.JSON
   other-modules:
       Paths_home_api
   hs-source-dirs:
@@ -49,6 +50,7 @@ library
       aeson
     , base >=4.7 && <5
     , bytestring
+    , deriving-aeson
     , home-core
     , home-db
     , monad-logger
