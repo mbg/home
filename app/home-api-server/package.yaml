@@ -15,3 +15,4 @@ executables:
       - home-core
       - home-db
       - home-api
+      - home-api-handlers

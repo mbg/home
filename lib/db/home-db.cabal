@@ -23,6 +23,12 @@ library
   exposed-modules:
       Home.Db
       Home.Db.Config
+      Home.Db.Finance
+      Home.Db.Finance.Merchant
+      Home.Db.Model
+      Home.Db.Schema
+      Home.Db.Types
+      Home.Db.UUID
   other-modules:
       Paths_home_db
   hs-source-dirs:
@@ -31,10 +37,14 @@ library
       DataKinds
       DeriveFoldable
       DeriveFunctor
+      DeriveGeneric
       DeriveTraversable
+      DerivingVia
+      FlexibleContexts
       FlexibleInstances
       ImportQualifiedPost
       InstanceSigs
+      KindSignatures
       LambdaCase
       MultiParamTypeClasses
       OverloadedStrings
@@ -50,12 +60,13 @@ library
       StandaloneDeriving
       UndecidableInstances
       FlexibleInstances
-  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -Wno-missing-export-lists
   build-depends:
       aeson
     , base >=4.7 && <5
     , bytestring
     , deriving-aeson
+    , esqueleto
     , home-core
     , http-api-data
     , monad-logger

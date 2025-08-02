@@ -1,6 +1,6 @@
 _common: !include "../../common/hpack/lib.yaml"
 
-name: home-api
+name: home-api-handlers
 <<: *common
 
 library:
@@ -9,9 +9,12 @@ library:
   dependencies:
     - aeson
     - deriving-aeson
+    - esqueleto
+    - home-api
     - home-core
     - home-db
     - monad-logger
+    - mtl
     - servant-server
     - warp
     - yaml

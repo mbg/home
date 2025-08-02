@@ -23,10 +23,14 @@
     - DataKinds
     - DeriveFoldable
     - DeriveFunctor
+    - DeriveGeneric
     - DeriveTraversable
+    - DerivingVia
+    - FlexibleContexts
     - FlexibleInstances
     - ImportQualifiedPost
     - InstanceSigs
+    - KindSignatures
     - LambdaCase
     - MultiParamTypeClasses
     - OverloadedStrings

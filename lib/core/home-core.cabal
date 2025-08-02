@@ -30,10 +30,14 @@ library
       DataKinds
       DeriveFoldable
       DeriveFunctor
+      DeriveGeneric
       DeriveTraversable
+      DerivingVia
+      FlexibleContexts
       FlexibleInstances
       ImportQualifiedPost
       InstanceSigs
+      KindSignatures
       LambdaCase
       MultiParamTypeClasses
       OverloadedStrings
@@ -64,10 +68,14 @@ test-suite home-core-tests
       DataKinds
       DeriveFoldable
       DeriveFunctor
+      DeriveGeneric
       DeriveTraversable
+      DerivingVia
+      FlexibleContexts
       FlexibleInstances
       ImportQualifiedPost
       InstanceSigs
+      KindSignatures
       LambdaCase
       MultiParamTypeClasses
       OverloadedStrings

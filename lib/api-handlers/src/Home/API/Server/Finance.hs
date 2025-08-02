@@ -1,25 +1,17 @@
-
--- | Implements the API.
-module Home.API (
-    API,
-    api
+-- | Implements the handlers for the finance API.
+module Home.API.Server.Finance (
+    financeHandlers
 ) where
 
 --------------------------------------------------------------------------------
 
-import Servant
-
 import Home.API.Finance
+import Home.API.Server.Handler
+import Home.API.Server.Finance.Merchants
 
 --------------------------------------------------------------------------------
 
--- | The API as a type.
-type API
-    = Get '[JSON] Int
- :<|> "finance" :> FinanceAPI
-
--- | A term-level proxy for `API`.
-api :: Proxy API
-api = Proxy
+financeHandlers :: ServerT FinanceAPI ApiHandler
+financeHandlers = merchantHandlers
 
 --------------------------------------------------------------------------------

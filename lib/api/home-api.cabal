@@ -23,6 +23,9 @@ library
   exposed-modules:
       Home.API
       Home.API.Config
+      Home.API.Finance
+      Home.API.Finance.Merchants
+      Home.API.JSON
   other-modules:
       Paths_home_api
   hs-source-dirs:
@@ -31,10 +34,14 @@ library
       DataKinds
       DeriveFoldable
       DeriveFunctor
+      DeriveGeneric
       DeriveTraversable
+      DerivingVia
+      FlexibleContexts
       FlexibleInstances
       ImportQualifiedPost
       InstanceSigs
+      KindSignatures
       LambdaCase
       MultiParamTypeClasses
       OverloadedStrings
@@ -46,6 +53,7 @@ library
       aeson
     , base >=4.7 && <5
     , bytestring
+    , deriving-aeson
     , home-core
     , home-db
     , monad-logger

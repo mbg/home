@@ -10,8 +10,8 @@ import System.Exit ( exitFailure )
 import System.IO
 
 import Home.Config.SecretSource
-import Home.API (runApiServer)
 import Home.API.Config
+import Home.API.Server ( runApiServer )
 import Home.Db
 
 --------------------------------------------------------------------------------
