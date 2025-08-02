@@ -1,0 +1,22 @@
+name: "Haskell"
+
+"on":
+  push:
+    branches:
+      - main
+      - dev
+  pull_request:
+
+jobs:
+  build:
+    name: "Build & Test"
+    runs-on: ubuntu-24.04-arm
+
+    steps:
+      - name: "Checkout repository"
+        uses: actions/checkout@v4
+
+      - name: Build
+        uses: mbg/actions/stack/build@v0.2
+        with:
+          upload-docs: true
