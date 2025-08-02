@@ -19,6 +19,7 @@ import Network.Wai.Handler.Warp ( run )
 import Home.API
 import Home.API.Config
 import Home.Db
+import Home.Db.Schema ( migrateAll )
 
 --------------------------------------------------------------------------------
 
@@ -34,7 +35,9 @@ app = serve api server
 runApiServer :: ApiConfig Text -> IO ()
 runApiServer cfg =
     runStdoutLoggingT $
-    withDatabase (apiPostgres cfg) $ \_ -> do
+    withDatabase (apiPostgres cfg) $ \dbPool -> do
+        -- Run safe database migrations
+        _ <- liftIO $ withPool dbPool $ runMigration migrateAll
         liftIO $ run port app
         where port = fromMaybe 8080 (apiPort cfg)
 
