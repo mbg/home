@@ -14,7 +14,7 @@ import Home.Db.Finance.Merchant qualified as Db
 --------------------------------------------------------------------------------
 
 fromDbMerchant :: Entity Db.Merchant -> Merchant
-fromDbMerchant (Entity key Db.Merchant{..}) = MkMerchant key merchantName
+fromDbMerchant (Entity key Db.Merchant{..}) = MkMerchant (Just key) merchantName
 
 -- | `getMerchants` lists all known merchants.
 getMerchants :: ApiHandler [Merchant]
