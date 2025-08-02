@@ -12,7 +12,6 @@ import Home.Db.Model
 
 dbModel "merchantModel" $(discoverEntities) [persistLowerCase|
 Merchant sql=merchant
-    Id
     name Text
     deriving Eq Show
 |]
