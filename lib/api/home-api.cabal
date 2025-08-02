@@ -23,6 +23,8 @@ library
   exposed-modules:
       Home.API
       Home.API.Config
+      Home.API.Finance
+      Home.API.Finance.Merchants
       Home.API.JSON
   other-modules:
       Paths_home_api

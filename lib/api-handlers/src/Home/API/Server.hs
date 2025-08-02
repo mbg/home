@@ -20,6 +20,7 @@ import Home.API
 import Home.API.Config
 import Home.API.Server.Context
 import Home.API.Server.Handler
+import Home.API.Server.Finance
 import Home.Db
 import Home.Db.Schema ( migrateAll )
 
@@ -27,7 +28,7 @@ import Home.Db.Schema ( migrateAll )
 
 -- | An implementation of `API`.
 server :: ServerT API ApiHandler
-server = pure 5
+server = pure 5 :<|> financeHandlers
 
 -- | A WAI `Application` for `server`.
 app :: ApiContext -> Application

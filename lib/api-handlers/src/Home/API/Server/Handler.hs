@@ -4,7 +4,11 @@
 -- handle API endpoints.
 module Home.API.Server.Handler (
     ApiHandler(..),
-    fromApiHandler
+    fromApiHandler,
+    -- * Re-exports
+    module Servant,
+    module Servant.Server,
+    module Home.Db.Types
 ) where
 
 --------------------------------------------------------------------------------
@@ -12,8 +16,10 @@ module Home.API.Server.Handler (
 import Control.Monad.Except ( MonadError )
 import Control.Monad.Reader
 
+import Servant
 import Servant.Server
 
+import Home.Db.Types
 import Home.API.Server.Context
 
 --------------------------------------------------------------------------------

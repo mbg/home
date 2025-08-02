@@ -23,6 +23,8 @@ library
   exposed-modules:
       Home.API.Server
       Home.API.Server.Context
+      Home.API.Server.Finance
+      Home.API.Server.Finance.Merchants
       Home.API.Server.Handler
   other-modules:
       Paths_home_api_handlers
