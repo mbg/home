@@ -9,7 +9,7 @@ module Home.API.JSON (
 
 --------------------------------------------------------------------------------
 
-import Data.Aeson
+import Data.Aeson hiding ( Key )
 
 import Deriving.Aeson
 
