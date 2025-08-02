@@ -52,3 +52,48 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  api-server:
+    name: "API Server"
+    runs-on: ubuntu-24.04-arm
+
+    needs:
+      - builder
+
+    env:
+      IMAGE_NAME: ${{ github.repository }}/api-server
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: "Checkout repository"
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+
+      - name: Build and push builder image
+        id: build-and-push
+        uses: docker/build-push-action@v5
+        with:
+          platforms: linux/arm64
+          file: ./Dockerfile
+          context: .
+          push: ${{ github.event_name == 'push' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            BASE_IMAGE=ghcr.io/mbg/home/builder
+            BASE_TAG=${{ github.ref_name }}

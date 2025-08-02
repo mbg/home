@@ -1,4 +1,6 @@
-FROM home-builder:latest AS builder
+ARG BASE_IMAGE=home-builder
+ARG BASE_TAG=latest
+FROM ${BASE_IMAGE}:${BASE_TAG} AS builder
 WORKDIR /work
 COPY . .
 RUN ls -lah
