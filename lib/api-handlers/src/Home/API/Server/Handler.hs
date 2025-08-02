@@ -8,7 +8,8 @@ module Home.API.Server.Handler (
     -- * Re-exports
     module Servant,
     module Servant.Server,
-    module Home.Db.Types
+    module Home.Db.Types,
+    CanRunQuery(..)
 ) where
 
 --------------------------------------------------------------------------------
@@ -19,6 +20,9 @@ import Control.Monad.Reader
 import Servant
 import Servant.Server
 
+import Database.Esqueleto.Experimental
+
+import Home.Db
 import Home.Db.Types
 import Home.API.Server.Context
 
@@ -38,5 +42,9 @@ newtype ApiHandler a
 -- to be run in a `Handler` computation.
 fromApiHandler :: ApiContext -> ApiHandler a -> Handler a
 fromApiHandler ctx = flip runReaderT ctx . runApiHandler
+
+instance CanRunQuery ApiHandler where
+    runQuery :: DbQuery a -> ApiHandler a
+    runQuery q = asks apiContextDbPool >>= liftIO . runSqlPool q
 
 --------------------------------------------------------------------------------

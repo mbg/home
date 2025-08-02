@@ -9,6 +9,7 @@ library:
   dependencies:
     - aeson
     - deriving-aeson
+    - esqueleto
     - home-api
     - home-core
     - home-db

@@ -6,7 +6,9 @@ module Home.Db (
     waitForDb,
     withDatabase,
     withPool,
-    runMigration
+    runMigration,
+    CanRunQuery(..),
+    selectOneOr
 ) where
 
 --------------------------------------------------------------------------------
@@ -21,6 +23,7 @@ import Data.Pool ( Pool )
 import Data.Text ( Text )
 import Data.Time.Units
 
+import Database.Esqueleto.Experimental
 import Database.Persist.Postgresql
 
 import Network.Wait.PostgreSQL
@@ -64,5 +67,20 @@ withDatabase cfg =
 -- This is just `runSqlPool` with its arguments flipped.
 withPool :: DbPool -> DbQuery a -> IO a
 withPool = flip runSqlPool
+
+-------------------------------------------------------------------------------
+
+-- | A class of types which represent contexts in which a `DbQuery` can be
+-- executed from.
+class Monad m => CanRunQuery m where
+    -- | `runQuery` @query@ executes @query@ using a database connection that
+    -- is available in a given context.
+    runQuery :: DbQuery a -> m a
+
+-- | `selectOneOr` @default query@ performs @query@ which is expected to
+-- return a single result. If there is none, then @default@ is executed and
+-- its result is returned.
+selectOneOr :: CanRunQuery m => SqlSelect a r => m r -> SqlQuery a -> m r
+selectOneOr def q = runQuery (selectOne q) >>= maybe def pure
 
 --------------------------------------------------------------------------------

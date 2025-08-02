@@ -65,6 +65,7 @@ library
     , base >=4.7 && <5
     , bytestring
     , deriving-aeson
+    , esqueleto
     , home-core
     , http-api-data
     , monad-logger
