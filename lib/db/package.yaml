@@ -6,6 +6,11 @@ name: home-db
 library:
   source-dirs: src
 
+  ghc-options:
+    # We generate a lot of code using TH and it is easier
+    # to just export everything from those modules.
+    - -Wno-missing-export-lists
+
   default-extensions:
     - TemplateHaskell
     - QuasiQuotes

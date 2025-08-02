@@ -2,10 +2,7 @@
 
 -- | Defines `Merchant`, which represents known merchants that might be
 -- associated with transactions.
-module Home.Db.Finance.Merchant (
-    Merchant(..),
-    merchantModel
-) where
+module Home.Db.Finance.Merchant where
 
 --------------------------------------------------------------------------------
 
