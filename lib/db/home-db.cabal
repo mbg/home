@@ -24,6 +24,7 @@ library
       Home.Db
       Home.Db.Config
       Home.Db.Types
+      Home.Db.UUID
   other-modules:
       Paths_home_db
   hs-source-dirs:
