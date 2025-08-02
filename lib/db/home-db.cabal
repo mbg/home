@@ -23,7 +23,10 @@ library
   exposed-modules:
       Home.Db
       Home.Db.Config
+      Home.Db.Finance
+      Home.Db.Finance.Merchant
       Home.Db.Model
+      Home.Db.Schema
       Home.Db.Types
       Home.Db.UUID
   other-modules:

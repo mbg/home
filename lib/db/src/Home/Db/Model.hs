@@ -4,11 +4,10 @@
 -- `dbModel` which can be used in a top-level expression to generate models
 -- using our custom settings from persistent entity definitions.
 module Home.Db.Model (
+    module Database.Persist.TH,
     module Home.Db.Types,
     dbModel,
-    PersistEntity(..),
-    discoverEntities,
-    persistLowerCase
+    PersistEntity(..)
 ) where
 
 --------------------------------------------------------------------------------
