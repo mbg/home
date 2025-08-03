@@ -19,6 +19,9 @@ import GHC.TypeLits
 
 -- | Our custom JSON encoding and decoding options, for use with `CustomJSON`.
 type JSONOptions (prefix :: Symbol) =
-  '[OmitNothingFields, FieldLabelModifier '[StripPrefix prefix, CamelToSnake]]
+  '[ OmitNothingFields
+   , FieldLabelModifier '[StripPrefix prefix, CamelToSnake]
+   , RejectUnknownFields
+   ]
 
 --------------------------------------------------------------------------------
