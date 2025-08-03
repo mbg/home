@@ -26,6 +26,7 @@ library
       Home.API.Server.Finance
       Home.API.Server.Finance.Merchants
       Home.API.Server.Handler
+      Home.API.Server.Validation
   other-modules:
       Paths_home_api_handlers
   hs-source-dirs:

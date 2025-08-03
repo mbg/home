@@ -9,6 +9,7 @@ module Home.API.Server.Handler (
     -- * Re-exports
     module Servant,
     module Home.Db.Types,
+    module Home.API.Server.Validation,
     CanRunQuery(..)
 ) where
 
@@ -24,6 +25,7 @@ import Database.Esqueleto.Experimental
 import Home.Db
 import Home.Db.Types
 import Home.API.Server.Context
+import Home.API.Server.Validation
 
 --------------------------------------------------------------------------------
 
