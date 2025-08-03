@@ -22,6 +22,7 @@ source-repository head
 library
   exposed-modules:
       Home.API.Server
+      Home.API.Server.ApiError
       Home.API.Server.Context
       Home.API.Server.Finance
       Home.API.Server.Finance.Merchants
