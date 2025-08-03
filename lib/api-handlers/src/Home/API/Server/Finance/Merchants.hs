@@ -5,6 +5,10 @@ module Home.API.Server.Finance.Merchants (
 
 --------------------------------------------------------------------------------
 
+import Control.Monad
+
+import Data.Text qualified as T
+
 import Database.Esqueleto.Experimental
 
 import Home.API.Finance.Merchants
@@ -39,7 +43,13 @@ getMerchant merchantId = do
 -- @merchant@ with the assigned key.
 putMerchant :: Merchant -> ApiHandler Merchant
 putMerchant MkMerchant{..} = do
+    -- Don't accept empty strings
+    validateNonEmpty "The merchant name" merchantName
+
+    -- Create the new merchant
     newMerchantId <- runQuery $ insert $ Db.Merchant merchantName
+
+    -- Return all available information about the new merchant
     pure $ MkMerchant (Just newMerchantId) merchantName
 
 merchantHandlers :: ServerT MerchantsAPI ApiHandler
