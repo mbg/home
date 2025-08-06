@@ -47,7 +47,9 @@ putMerchant MkMerchant{..} = do
     validateNonEmpty "The merchant name" merchantName
 
     -- Create the new merchant
-    newMerchantId <- runQuery $ insert $ Db.Merchant merchantName
+    now <- liftIO getCurrentTime
+    newMerchantId <- runQuery $ insert $
+        Db.Merchant merchantName now
 
     -- Return all available information about the new merchant
     pure $ MkMerchant (Just newMerchantId) merchantName
