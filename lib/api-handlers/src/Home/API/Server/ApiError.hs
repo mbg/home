@@ -5,7 +5,8 @@ module Home.API.Server.ApiError (
     ApiError(..),
     apiError400,
     apiError404,
-    jsonErrorFormatters
+    jsonErrorFormatters,
+    MonadApiError(..)
 ) where
 
 --------------------------------------------------------------------------------
@@ -74,5 +75,15 @@ jsonErrorFormatters = defaultErrorFormatters{
         errBody = encode apiError404
     }
 }
+
+--------------------------------------------------------------------------------
+
+-- | Similar to `MonadError`, except specific to `ApiError` and does not support
+-- catching exceptions. The reasoning for having this class is that we want the API
+-- to return errors as JSON, but doing so with a `MonadError` instance would
+-- require us to parse that JSON back into an `ApiError` in the `catchError`
+-- implementation, which is a bit awkward. So instead we have this.
+class Monad m => MonadApiError m where
+    throwApiError :: ApiError -> m r
 
 --------------------------------------------------------------------------------

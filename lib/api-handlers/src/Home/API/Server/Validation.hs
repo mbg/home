@@ -6,13 +6,11 @@ module Home.API.Server.Validation (
 --------------------------------------------------------------------------------
 
 import Control.Monad
-import Control.Monad.Error.Class
 
-import Data.ByteString.Lazy ( ByteString )
 import Data.Char ( isSpace )
 import Data.Text qualified as T
 
-import Servant.Server
+import Home.API.Server.ApiError
 
 --------------------------------------------------------------------------------
 
@@ -20,13 +18,12 @@ import Servant.Server
 -- space characters. If it is, then a HTTP 400 error is thrown whose body
 -- explains that @name@ must not be empty.
 validateNonEmpty
-    :: MonadError ServerError m
-    => ByteString
+    :: MonadApiError m
+    => T.Text
     -> T.Text
     -> m ()
 validateNonEmpty name val =
-    when (T.all isSpace val) $ throwError err400{
-        errBody = name <> " must not be empty."
-    }
+    when (T.all isSpace val) $ throwApiError $ apiError400 $
+        name <> " must not be empty."
 
 --------------------------------------------------------------------------------
