@@ -80,6 +80,7 @@ library
     , retry
     , template-haskell
     , text
+    , time
     , time-units
     , transformers
     , unliftio-core
