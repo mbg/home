@@ -1,5 +1,5 @@
 
-module Home.API.JSON (
+module Home.JSON (
     JSONOptions,
     -- * Re-exports
     Generic,
