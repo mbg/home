@@ -11,7 +11,7 @@ import Servant
 
 import Home.Db.Types
 import Home.Db.Finance.Merchant qualified as Db
-import Home.API.JSON
+import Home.JSON
 
 --------------------------------------------------------------------------------
 
