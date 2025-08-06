@@ -36,14 +36,17 @@ library
       DerivingVia
       FlexibleContexts
       FlexibleInstances
+      GADTs
       ImportQualifiedPost
       InstanceSigs
       KindSignatures
       LambdaCase
       MultiParamTypeClasses
+      NamedFieldPuns
       OverloadedStrings
       RecordWildCards
       TypeApplications
+      TypeFamilies
       TypeOperators
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
   build-depends:
@@ -74,14 +77,17 @@ test-suite home-core-tests
       DerivingVia
       FlexibleContexts
       FlexibleInstances
+      GADTs
       ImportQualifiedPost
       InstanceSigs
       KindSignatures
       LambdaCase
       MultiParamTypeClasses
+      NamedFieldPuns
       OverloadedStrings
       RecordWildCards
       TypeApplications
+      TypeFamilies
       TypeOperators
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N -Wno-missing-export-lists
   build-tool-depends:

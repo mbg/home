@@ -28,14 +28,17 @@
     - DerivingVia
     - FlexibleContexts
     - FlexibleInstances
+    - GADTs
     - ImportQualifiedPost
     - InstanceSigs
     - KindSignatures
     - LambdaCase
     - MultiParamTypeClasses
+    - NamedFieldPuns
     - OverloadedStrings
     - RecordWildCards
     - TypeApplications
+    - TypeFamilies
     - TypeOperators
 
   dependencies:
