@@ -2,7 +2,7 @@
 -- | Implements the merchants API.
 module Home.API.Finance.Merchants (
     MerchantsAPI,
-    Merchant(..)
+    MerchantInfo(..)
 ) where
 
 --------------------------------------------------------------------------------
@@ -15,20 +15,21 @@ import Home.JSON
 
 --------------------------------------------------------------------------------
 
-data Merchant = MkMerchant {
+data MerchantInfo = MkMerchantInfo {
     merchantId :: Maybe (Key Db.Merchant),
     merchantName :: Text
 } deriving (Generic, Eq, Show)
-  deriving (FromJSON, ToJSON) via CustomJSON (JSONOptions "merchant") Merchant
+  deriving (FromJSON, ToJSON)
+    via CustomJSON (JSONOptions "merchant") MerchantInfo
 
 --------------------------------------------------------------------------------
 
 -- | Describes the API for merchants.
 type MerchantsAPI
-    = Get '[JSON] [Merchant]
+    = Get '[JSON] [MerchantInfo]
  :<|> Capture "id" (Key Db.Merchant) :>
-      Get '[JSON] (Merchant)
- :<|> ReqBody '[JSON] Merchant :>
-      Put '[JSON] Merchant
+      Get '[JSON] (MerchantInfo)
+ :<|> ReqBody '[JSON] MerchantInfo :>
+      Put '[JSON] MerchantInfo
 
 --------------------------------------------------------------------------------

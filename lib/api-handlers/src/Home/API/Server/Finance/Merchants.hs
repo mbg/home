@@ -17,11 +17,12 @@ import Home.Db.Finance.Merchant qualified as Db
 
 --------------------------------------------------------------------------------
 
-fromDbMerchant :: Entity Db.Merchant -> Merchant
-fromDbMerchant (Entity key Db.Merchant{..}) = MkMerchant (Just key) merchantName
+fromDbMerchant :: Entity Db.Merchant -> MerchantInfo
+fromDbMerchant (Entity key Db.Merchant{..}) =
+    MkMerchantInfo (Just key) merchantName
 
 -- | `getMerchants` lists all known merchants.
-getMerchants :: ApiHandler [Merchant]
+getMerchants :: ApiHandler [MerchantInfo]
 getMerchants = do
     merchants <- runQuery $ select $ do
         m <- from $ table @Db.Merchant
@@ -30,7 +31,7 @@ getMerchants = do
     pure $ map fromDbMerchant merchants
 
 -- | `getMerchant` @key@ gets the merchant identifier by @key@.
-getMerchant :: Key Db.Merchant -> ApiHandler Merchant
+getMerchant :: Key Db.Merchant -> ApiHandler MerchantInfo
 getMerchant merchantId = do
     merchant <- selectOneOr404 $ do
         m <- from $ table @Db.Merchant
@@ -41,8 +42,8 @@ getMerchant merchantId = do
 
 -- | `putMerchant` @merchant@ adds @merchant@ to the database and returns
 -- @merchant@ with the assigned key.
-putMerchant :: Merchant -> ApiHandler Merchant
-putMerchant MkMerchant{..} = do
+putMerchant :: MerchantInfo -> ApiHandler MerchantInfo
+putMerchant MkMerchantInfo{..} = do
     -- Don't accept empty strings
     validateNonEmpty "The merchant name" merchantName
 
@@ -52,7 +53,7 @@ putMerchant MkMerchant{..} = do
         Db.Merchant merchantName now
 
     -- Return all available information about the new merchant
-    pure $ MkMerchant (Just newMerchantId) merchantName
+    pure $ MkMerchantInfo (Just newMerchantId) merchantName
 
 merchantHandlers :: ServerT MerchantsAPI ApiHandler
 merchantHandlers = getMerchants :<|> getMerchant :<|> putMerchant
