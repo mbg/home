@@ -5,7 +5,8 @@ module Home.Db.Types (
     module Data.Text,
     module Data.Time,
     module Home.Db.UUID,
-    Database.Persist.Key
+    Database.Persist.Key,
+    Database.Persist.Entity(..)
 ) where
 
 --------------------------------------------------------------------------------
