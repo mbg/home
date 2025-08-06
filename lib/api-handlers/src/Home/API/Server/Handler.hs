@@ -7,6 +7,7 @@ module Home.API.Server.Handler (
     fromApiHandler,
     selectOneOr404,
     -- * Re-exports
+    module Control.Monad.IO.Class,
     module Servant,
     module Home.Db.Types,
     module Home.API.Server.ApiError,
@@ -16,6 +17,7 @@ module Home.API.Server.Handler (
 
 --------------------------------------------------------------------------------
 
+import Control.Monad.IO.Class
 import Control.Monad.Reader
 
 import Data.Aeson ( encode )
