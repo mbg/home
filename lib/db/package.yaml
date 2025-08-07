@@ -38,6 +38,7 @@ library:
     - resource-pool
     - retry
     - template-haskell
+    - time
     - time-units
     - transformers
     - unliftio-core

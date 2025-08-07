@@ -7,15 +7,22 @@ module Home.API.Server.Handler (
     fromApiHandler,
     selectOneOr404,
     -- * Re-exports
+    module Control.Monad.IO.Class,
     module Servant,
     module Home.Db.Types,
+    module Home.API.Response,
+    module Home.API.Server.ApiError,
+    module Home.API.Server.Validation,
     CanRunQuery(..)
 ) where
 
 --------------------------------------------------------------------------------
 
-import Control.Monad.Except ( MonadError )
+import Control.Monad.IO.Class
 import Control.Monad.Reader
+
+import Data.Aeson ( encode )
+import Data.Text qualified as T
 
 import Servant
 
@@ -23,7 +30,10 @@ import Database.Esqueleto.Experimental
 
 import Home.Db
 import Home.Db.Types
+import Home.API.Response
+import Home.API.Server.ApiError
 import Home.API.Server.Context
+import Home.API.Server.Validation
 
 --------------------------------------------------------------------------------
 
@@ -32,9 +42,17 @@ import Home.API.Server.Context
 newtype ApiHandler a
     = MkApiHandler { runApiHandler :: ReaderT ApiContext Handler a }
     deriving newtype ( Functor, Applicative, Monad, MonadIO
-                     , MonadError ServerError
                      , MonadReader ApiContext
                      )
+
+instance MonadApiError ApiHandler where
+    throwApiError :: ApiError -> ApiHandler r
+    throwApiError err@MkApiError{..} = MkApiHandler $ throwError $ ServerError{
+        errHTTPCode = apiErrorCode,
+        errReasonPhrase = T.unpack apiErrorStatus,
+        errBody = encode err,
+        errHeaders = []
+    }
 
 -- | `fromApiHandler` @ctx handler@ is a monad morphism from `ApiHandler` to
 -- `Handler`. That is, given a @ctx@, it allows an `ApiHandler` computation
@@ -46,9 +64,9 @@ fromApiHandler ctx = flip runReaderT ctx . runApiHandler
 -- a single result. If there is none, a HTTP 404 error is raised as a
 -- `ServerError`.
 selectOneOr404
-    :: (CanRunQuery m, MonadError ServerError m, SqlSelect a r)
+    :: (CanRunQuery m, MonadApiError m, SqlSelect a r)
     => SqlQuery a -> m r
-selectOneOr404 = selectOneOr (throwError err404)
+selectOneOr404 = selectOneOr (throwApiError apiError404)
 
 instance CanRunQuery ApiHandler where
     runQuery :: DbQuery a -> ApiHandler a

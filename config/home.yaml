@@ -1,6 +1,6 @@
 postgres:
   host: localhost
   user: postgres
-  database: postgres
+  db: postgres
   password:
     secretVar: HOME_POSTGRES_PASSWORD

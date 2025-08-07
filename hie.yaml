@@ -1,0 +1,5 @@
+cradle:
+  stack:
+
+dependencies:
+  - common/hpack/lib.yaml

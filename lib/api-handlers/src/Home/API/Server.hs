@@ -18,6 +18,7 @@ import Network.Wai.Handler.Warp ( run )
 
 import Home.API
 import Home.API.Config
+import Home.API.Server.ApiError ( jsonErrorFormatters )
 import Home.API.Server.Context
 import Home.API.Server.Handler
 import Home.API.Server.Finance
@@ -30,9 +31,15 @@ import Home.Db.Schema ( migrateAll )
 server :: ServerT API ApiHandler
 server = pure 5 :<|> financeHandlers
 
+-- | A custom Servant `Context` which installs custom error formatters.
+servantContext :: Context '[ErrorFormatters]
+servantContext = jsonErrorFormatters :. EmptyContext
+
 -- | A WAI `Application` for `server`.
 app :: ApiContext -> Application
-app ctx = serve api $ hoistServer api (fromApiHandler ctx) server
+app ctx =
+    serveWithContext api servantContext $
+    hoistServer api (fromApiHandler ctx) server
 
 -- | `runApiServer` starts the API on the port given by @cfg@.
 runApiServer :: ApiConfig Text -> IO ()

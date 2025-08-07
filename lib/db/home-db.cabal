@@ -25,6 +25,7 @@ library
       Home.Db.Config
       Home.Db.Finance
       Home.Db.Finance.Merchant
+      Home.Db.Index
       Home.Db.Model
       Home.Db.Schema
       Home.Db.Types
@@ -42,14 +43,17 @@ library
       DerivingVia
       FlexibleContexts
       FlexibleInstances
+      GADTs
       ImportQualifiedPost
       InstanceSigs
       KindSignatures
       LambdaCase
       MultiParamTypeClasses
+      NamedFieldPuns
       OverloadedStrings
       RecordWildCards
       TypeApplications
+      TypeFamilies
       TypeOperators
       TemplateHaskell
       QuasiQuotes
@@ -80,6 +84,7 @@ library
     , retry
     , template-haskell
     , text
+    , time
     , time-units
     , transformers
     , unliftio-core
