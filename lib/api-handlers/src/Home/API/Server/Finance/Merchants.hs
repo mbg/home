@@ -5,10 +5,6 @@ module Home.API.Server.Finance.Merchants (
 
 --------------------------------------------------------------------------------
 
-import Control.Monad
-
-import Data.Text qualified as T
-
 import Database.Esqueleto.Experimental
 
 import Home.API.Finance.Merchants
@@ -22,6 +18,14 @@ fromDbMerchant (Entity key Db.Merchant{..}) =
     mkKeyed key $ MkMerchantInfo{
         merchantName
     }
+
+-- | `merchantById` @key@ is a `SqlQuery` for retrieving a `Db.Merchant` entity
+-- with the given @key@.
+merchantById :: Key Db.Merchant -> SqlQuery (SqlExpr (Entity Db.Merchant))
+merchantById merchantId = do
+    m <- from $ table @Db.Merchant
+    where_ $ m ^. Db.MerchantId ==. val merchantId
+    pure m
 
 -- | `getMerchants` lists all known merchants.
 getMerchants :: ApiHandler [Keyed MerchantInfo]
@@ -37,10 +41,7 @@ getMerchant
     :: Key Db.Merchant
     -> ApiHandler (Keyed MerchantInfo)
 getMerchant merchantId = do
-    merchant <- selectOneOr404 $ do
-        m <- from $ table @Db.Merchant
-        where_ $ m ^. Db.MerchantId ==. val merchantId
-        pure m
+    merchant <- selectOneOr404 $ merchantById merchantId
 
     pure $ fromDbMerchant merchant
 
