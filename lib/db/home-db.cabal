@@ -25,6 +25,7 @@ library
       Home.Db.Config
       Home.Db.Finance
       Home.Db.Finance.Merchant
+      Home.Db.Index
       Home.Db.Model
       Home.Db.Schema
       Home.Db.Types
