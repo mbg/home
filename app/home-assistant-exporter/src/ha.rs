@@ -3,6 +3,8 @@ use tracing::{error, info};
 
 use crate::config::HomeAssistantConfig;
 
+pub mod event;
+
 /// Attempts to initialise a Home Assistant web socket client for `url`.
 /// Will try to authenticate it using `token` if the connection is successful.
 /// Returns the authenticated client or nothing.

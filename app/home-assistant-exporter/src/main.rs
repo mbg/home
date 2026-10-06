@@ -1,6 +1,6 @@
 use hass_rs::HassClient;
 use std::process::ExitCode;
-use tracing::info;
+use tracing::{error, info};
 
 mod config;
 mod ha;
@@ -26,6 +26,24 @@ async fn main() -> ExitCode {
         None => return ExitCode::FAILURE,
         Some(client) => ha_client = client,
     }
+
+    // Subscribe to `state_changed` events from Home Assistant.
+    let mut event_receiver;
+    match ha_client.subscribe_event("state_changed").await {
+        Err(err) => {
+            error!("Failed to subscribe to `state_changed` events: {}", err);
+            return ExitCode::FAILURE;
+        }
+        Ok(receiver) => event_receiver = receiver,
+    };
+
+    // Spawn a task to handle events we receive from Home Assistant.
+    let event_listener = tokio::spawn(async move {
+        while let Some(message) = event_receiver.recv().await {
+            ha::event::process(message).await;
+        }
+        info!("Connection to Home Assistant has been closed.");
+    });
 
     // If we have reached this point, we are exiting normally.
     return ExitCode::SUCCESS;
