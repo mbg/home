@@ -1,8 +1,8 @@
-use std::sync::LazyLock;
+use std::sync::{LazyLock, atomic::AtomicU64};
 
 use prometheus_client::{
     encoding::EncodeLabelSet,
-    metrics::{counter::Counter, family::Family},
+    metrics::{counter::Counter, family::Family, gauge::Gauge},
     registry::Registry,
 };
 
@@ -18,6 +18,16 @@ pub struct EventLabels {
 pub static EVENT_COUNTER: LazyLock<Family<EventLabels, Counter>> =
     std::sync::LazyLock::new(|| Family::<EventLabels, Counter>::default());
 
+#[derive(Clone, Debug, Hash, PartialEq, Eq, EncodeLabelSet)]
+pub struct StateLabels {
+    /// The ID of the entity, comprised of the domain and name.
+    pub entity_id: String,
+}
+
+/// A gauge for entity states.
+pub static STATES: LazyLock<Family<StateLabels, Gauge<f64, AtomicU64>>> =
+    std::sync::LazyLock::new(|| Family::<StateLabels, Gauge<f64, AtomicU64>>::default());
+
 /// Initialises the metric registry and registers the Home Assistant metrics.
 pub fn create() -> std::sync::Arc<Registry> {
     // Create the metric registry with the default prefix.
@@ -28,6 +38,7 @@ pub fn create() -> std::sync::Arc<Registry> {
         "Home Assistant event counter.",
         EVENT_COUNTER.clone(),
     );
+    registry.register("states", "Home Assistant entity states.", STATES.clone());
 
     return std::sync::Arc::new(registry);
 }
