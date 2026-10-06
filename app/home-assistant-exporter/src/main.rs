@@ -1,7 +1,9 @@
+use hass_rs::HassClient;
 use std::process::ExitCode;
 use tracing::info;
 
 mod config;
+mod ha;
 
 #[tokio::main]
 async fn main() -> ExitCode {
@@ -12,7 +14,14 @@ async fn main() -> ExitCode {
     info!("Starting home-assistant-exporter...");
 
     // Obtain the service configuration.
-    config::load();
+    let config = config::load();
+
+    // Initialise the Home Assistant web socket client.
+    let mut ha_client: HassClient;
+    match ha::connect(&config.ha).await {
+        None => return ExitCode::FAILURE,
+        Some(client) => ha_client = client,
+    }
 
     // If we have reached this point, we are exiting normally.
     return ExitCode::SUCCESS;
