@@ -6,6 +6,14 @@ name: "Haskell"
       - main
       - dev
   pull_request:
+    paths:
+      - app/home-api-server/**
+      - common/**
+      - config/**
+      - lib/**
+      - Setup.hs
+      - stack.yaml
+      - stack.yaml.lock
 
 jobs:
   build:
