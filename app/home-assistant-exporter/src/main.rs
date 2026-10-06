@@ -27,6 +27,8 @@ async fn main() -> ExitCode {
         Some(client) => ha_client = client,
     }
 
+    info!("Successfully connected to Home Assistant.");
+
     // Subscribe to `state_changed` events from Home Assistant.
     let mut event_receiver;
     match ha_client.subscribe_event("state_changed").await {
@@ -44,6 +46,8 @@ async fn main() -> ExitCode {
         }
         info!("Connection to Home Assistant has been closed.");
     });
+
+    info!("Successfully subscribed to `state_changed` events and started listening for them.");
 
     // If we have reached this point, we are exiting normally.
     return ExitCode::SUCCESS;
