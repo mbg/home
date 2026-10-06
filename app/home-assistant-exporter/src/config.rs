@@ -5,6 +5,9 @@ pub static DEFAULT_METRIC_PORT: u16 = 8001;
 pub static DEFAULT_METRIC_ADDRESS: std::net::Ipv4Addr =
     std::net::Ipv4Addr::from_octets([0, 0, 0, 0]);
 
+/// The default prefix for prometheus metrics.
+pub static DEFAULT_METRIC_PREFIX: &str = "ha";
+
 pub struct ServerConfig {
     pub address: std::net::IpAddr,
     pub port: u16,

@@ -4,6 +4,7 @@ use tracing::info;
 
 mod config;
 mod ha;
+mod metrics;
 
 #[tokio::main]
 async fn main() -> ExitCode {
@@ -15,6 +16,9 @@ async fn main() -> ExitCode {
 
     // Obtain the service configuration.
     let config = config::load();
+
+    // Initialise the metrics registry.
+    let registry = metrics::create();
 
     // Initialise the Home Assistant web socket client.
     let mut ha_client: HassClient;
