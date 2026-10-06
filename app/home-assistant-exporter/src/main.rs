@@ -49,6 +49,16 @@ async fn main() -> ExitCode {
 
     info!("Successfully subscribed to `state_changed` events and started listening for them.");
 
+    // Wait for the task to complete.
+    tokio::select! {
+        event_result = event_listener => {
+            if let Err(error) = event_result {
+                error!("Error while waiting for the event listener: {}", error);
+                return ExitCode::FAILURE;
+            }
+        },
+    }
+
     // If we have reached this point, we are exiting normally.
     return ExitCode::SUCCESS;
 }
