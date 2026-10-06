@@ -6,6 +6,18 @@ name: "Haskell"
       - main
       - dev
   pull_request:
+    paths:
+      - app/home-api-server/**
+      - common/**
+      - config/**
+      - lib/**
+      - Setup.hs
+      - stack.yaml
+      - stack.yaml.lock
+
+concurrency:
+  group: "haskell-${{ github.ref_name }}"
+  cancel-in-progress: true
 
 jobs:
   build:

@@ -5,6 +5,15 @@ name: "Container"
     branches:
       - main
       - dev
+    paths:
+      - app/home-api-server/**
+      - common/**
+      - config/**
+      - lib/**
+      - util/**
+      - Setup.hs
+      - stack.yaml
+      - stack.yaml.lock
 
 concurrency:
   group: "container-${{ github.ref_name }}"
