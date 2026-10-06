@@ -59,7 +59,7 @@ jobs:
 
       - name: Build and push builder image
         id: build-and-push
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           platforms: linux/arm64
           file: ./util/builder/Dockerfile
@@ -109,7 +109,7 @@ jobs:
 
       - name: Build and push builder image
         id: build-and-push
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           platforms: linux/arm64
           file: ./Dockerfile
