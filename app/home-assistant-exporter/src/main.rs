@@ -5,6 +5,7 @@ use tracing::{error, info};
 mod config;
 mod ha;
 mod metrics;
+mod server;
 
 #[tokio::main]
 async fn main() -> ExitCode {
@@ -19,6 +20,15 @@ async fn main() -> ExitCode {
 
     // Initialise the metrics registry.
     let registry = metrics::create();
+
+    // Start the HTTP server to serve the metrics.
+    let metrics_addr = std::net::SocketAddr::new(config.server.address, config.server.port);
+    let metrics_listener;
+
+    match server::start(metrics_addr, registry.clone()).await {
+        None => return ExitCode::FAILURE,
+        Some(listener) => metrics_listener = listener,
+    }
 
     // Initialise the Home Assistant web socket client.
     let mut ha_client: HassClient;
@@ -57,6 +67,12 @@ async fn main() -> ExitCode {
                 return ExitCode::FAILURE;
             }
         },
+        metrics_result = metrics_listener => {
+            if let Err(error) = metrics_result {
+                error!("Error while waiting for the metrics listener: {}", error);
+                return ExitCode::FAILURE;
+            }
+        }
     }
 
     // If we have reached this point, we are exiting normally.
