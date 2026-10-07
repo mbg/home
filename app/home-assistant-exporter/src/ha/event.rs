@@ -1,7 +1,19 @@
+use std::str::FromStr;
+
 use hass_rs::{HassEvent, WSEvent};
 use tracing::{Level, event, info};
 
 use crate::metrics::{self};
+
+/// Determines if `value` is `unknown`.
+fn is_unknown(value: &String) -> bool {
+    return value == "unknown";
+}
+
+/// Determines if `value` is `unavailable`.
+fn is_unavailable(value: &String) -> bool {
+    return value == "unavailable";
+}
 
 /// Tries to parse `value` as a boolean value.
 fn value_as_bool(value: &String) -> Option<f64> {
@@ -24,6 +36,31 @@ fn value_as_f64(value: &String) -> Option<f64> {
     return value_as_bool(value);
 }
 
+#[derive(Debug)]
+pub enum StateValue {
+    Unknown,
+    Unavailable,
+    Numeric(f64),
+}
+
+impl FromStr for StateValue {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let val = s.trim().to_lowercase();
+
+        if is_unknown(&val) {
+            return Ok(StateValue::Unknown);
+        } else if is_unavailable(&val) {
+            return Ok(StateValue::Unavailable);
+        } else if let Some(val) = value_as_f64(&val) {
+            return Ok(StateValue::Numeric(val));
+        }
+
+        return Err(());
+    }
+}
+
 /// Gets the ID of the entity, including the domain.
 fn entity_id(event: &HassEvent) -> &Option<String> {
     return &event.data.entity_id;
@@ -33,7 +70,11 @@ fn entity_id(event: &HassEvent) -> &Option<String> {
 #[tracing::instrument]
 fn state_changed(event: HassEvent) -> Option<()> {
     let entity_id = entity_id(&event).as_ref()?;
-    let state_value = event.data.new_state.as_ref().map(|s| &s.state);
+    let state_value = event
+        .data
+        .new_state
+        .as_ref()
+        .and_then(|s| s.state.parse::<StateValue>().ok());
 
     let labels = metrics::StateLabels {
         entity_id: entity_id.to_string(),
@@ -41,7 +82,7 @@ fn state_changed(event: HassEvent) -> Option<()> {
 
     // We expect most 'sensor' entities to have a value that can be parsed as f64,
     // which we attempt here.
-    if let Some(val) = state_value.and_then(value_as_f64) {
+    if let Some(StateValue::Numeric(val)) = state_value {
         metrics::STATES.get_or_create(&labels).set(val);
     } else {
         info!(
