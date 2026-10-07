@@ -66,10 +66,21 @@ fn entity_id(event: &HassEvent) -> &Option<String> {
     return &event.data.entity_id;
 }
 
+/// Gets the HA domain and name from an entity_id.
+pub fn domain_and_name(entity_id: &String) -> Option<(&str, &str)> {
+    let parts: Vec<&str> = entity_id.split('.').collect();
+
+    if parts.len() == 2 {
+        return Some((parts[0], parts[1]));
+    }
+    return None;
+}
+
 /// Processes a "state_changed" event.
 #[tracing::instrument]
 fn state_changed(event: HassEvent) -> Option<()> {
     let entity_id = entity_id(&event).as_ref()?;
+    let (domain, name) = domain_and_name(entity_id)?;
     let state_value = event
         .data
         .new_state
@@ -78,6 +89,8 @@ fn state_changed(event: HassEvent) -> Option<()> {
 
     let labels = metrics::StateLabels {
         entity_id: entity_id.to_string(),
+        domain: domain.to_string(),
+        name: name.to_string(),
     };
 
     if let Some(state_value) = state_value {

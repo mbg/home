@@ -22,6 +22,10 @@ pub static EVENT_COUNTER: LazyLock<Family<EventLabels, Counter>> =
 pub struct StateLabels {
     /// The ID of the entity, comprised of the domain and name.
     pub entity_id: String,
+    /// The HA domain of the entity.
+    pub domain: String,
+    /// The name of the entity, without the domain.
+    pub name: String,
 }
 
 /// A gauge for entity states.
