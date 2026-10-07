@@ -1,7 +1,7 @@
 use std::str::FromStr;
 
 use hass_rs::{HassEvent, WSEvent};
-use tracing::{Level, event, info};
+use tracing::{Level, event, info, trace};
 
 use crate::metrics::{self};
 
@@ -36,7 +36,7 @@ fn value_as_f64(value: &String) -> Option<f64> {
     return value_as_bool(value);
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum StateValue {
     Unknown,
     Unavailable,
@@ -80,10 +80,17 @@ fn state_changed(event: HassEvent) -> Option<()> {
         entity_id: entity_id.to_string(),
     };
 
-    // We expect most 'sensor' entities to have a value that can be parsed as f64,
-    // which we attempt here.
-    if let Some(StateValue::Numeric(val)) = state_value {
-        metrics::STATES.get_or_create(&labels).set(val);
+    if let Some(state_value) = state_value {
+        if let StateValue::Numeric(val) = state_value {
+            metrics::STATES.get_or_create(&labels).set(val);
+        } else if state_value == StateValue::Unknown || state_value == StateValue::Unavailable {
+            if metrics::STATES.remove(&labels) {
+                trace!(
+                    "Removed metric for '{}' since it changed to '{:?}'",
+                    labels.entity_id, state_value
+                );
+            }
+        }
     } else {
         info!(
             "Didn't know what to do with an event for '{}' with state '{:?}'.",
