@@ -1,5 +1,5 @@
 use hass_rs::{HassEvent, WSEvent};
-use tracing::info;
+use tracing::{Level, event, info};
 
 use crate::metrics::{self};
 
@@ -66,5 +66,11 @@ pub async fn process(message: WSEvent) {
 
     if event.event_type == "state_changed" {
         state_changed(event);
+    } else {
+        event!(
+            Level::INFO,
+            message = "Ignoring unexpected event type.",
+            event_type = event.event_type
+        )
     }
 }
