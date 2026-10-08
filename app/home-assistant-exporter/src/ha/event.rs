@@ -1,7 +1,7 @@
 use std::{fmt::Display, str::FromStr};
 
-use hass_rs::{HassEntity, HassEvent, WSEvent};
-use tracing::{Level, event, info, trace};
+use hass_rs::{EventData, HassEntity, HassEvent, WSEvent};
+use tracing::{Level, error, event, info, trace};
 
 use crate::metrics::{self, StateLabels};
 
@@ -88,35 +88,68 @@ pub fn domain_and_name(entity_id: &String) -> Option<(&str, &str)> {
     return None;
 }
 
-fn clear_enum_for_old_state(labels: &StateLabels, old_state: &HassEntity) {
+fn clear_enum_for_old_state(labels: &StateLabels, old_state: String) {
     // Reset the previous state metric for this enum-like entity
     let mut prev_labels = labels.clone();
-    prev_labels.state = Some(old_state.state.to_string());
+    prev_labels.state = Some(old_state);
 
     metrics::STATES.remove(&prev_labels);
 }
 
-fn update_enum(labels: &mut StateLabels, event: &HassEvent, state_value: StateValue) {
+fn update_enum(labels: &mut StateLabels, state_value: String, old_state: Option<String>) {
     // Clear the series based on the old state.
-    if let Some(old_state) = &event.data.old_state {
+    if let Some(old_state) = old_state {
         clear_enum_for_old_state(&labels, old_state);
     }
 
     // Set the metric for the current state to 1.
-    labels.state = Some(state_value.to_string());
+    labels.state = Some(state_value);
     let _ = metrics::STATES.get_or_create(&labels).set(1f64);
 }
 
 /// Processes a "state_changed" event.
 #[tracing::instrument]
 fn state_changed(event: HassEvent) -> Option<()> {
-    let entity_id = entity_id(&event).as_ref()?;
-    let (domain, name) = domain_and_name(entity_id)?;
-    let state_value = event
-        .data
-        .new_state
-        .as_ref()
-        .and_then(|s| s.state.parse::<StateValue>().ok());
+    // Deconstruct the event data.
+    let EventData {
+        entity_id,
+        new_state,
+        old_state,
+        extra: _extra,
+    } = event.data;
+
+    // Check that we have an entity_id. Fail if not.
+    let entity_id = match entity_id {
+        Some(s) => s,
+        None => {
+            error!("Event without an entity_id.");
+            return None;
+        }
+    };
+
+    // Extract the domain and name from the entity_id.
+    // Fail if the format doesn't match our expectations.
+    let (domain, name) = match domain_and_name(&entity_id) {
+        Some(r) => r,
+        None => {
+            error!("Invalid entity_id '{}'.", entity_id);
+            return None;
+        }
+    };
+
+    // Deconstruct the new entity state or fail if there isn't one.
+    let HassEntity {
+        state, attributes, ..
+    } = match new_state {
+        Some(s) => s,
+        None => {
+            error!("No new_state for event.");
+            return None;
+        }
+    };
+
+    // Parse the state.
+    let state_value = state.parse::<StateValue>().ok();
 
     let mut labels = metrics::StateLabels {
         entity_id: entity_id.to_string(),
@@ -136,7 +169,11 @@ fn state_changed(event: HassEvent) -> Option<()> {
                 );
             }
         } else if domain == "enum" || domain == "event" {
-            update_enum(&mut labels, &event, state_value);
+            update_enum(
+                &mut labels,
+                state_value.to_string(),
+                old_state.map(|s| s.state),
+            );
         } else {
             info!(
                 "Didn't know what to do with an event for '{}' with state '{}'.",
