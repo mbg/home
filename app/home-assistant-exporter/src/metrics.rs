@@ -26,6 +26,8 @@ pub struct StateLabels {
     pub domain: String,
     /// The name of the entity, without the domain.
     pub name: String,
+    /// The state of the entity, for enum-like states.
+    pub state: Option<String>,
 }
 
 /// A gauge for entity states.

@@ -1,9 +1,9 @@
-use std::str::FromStr;
+use std::{fmt::Display, str::FromStr};
 
-use hass_rs::{HassEvent, WSEvent};
+use hass_rs::{HassEntity, HassEvent, WSEvent};
 use tracing::{Level, event, info, trace};
 
-use crate::metrics::{self};
+use crate::metrics::{self, StateLabels};
 
 /// Determines if `value` is `unknown`.
 fn is_unknown(value: &String) -> bool {
@@ -41,6 +41,18 @@ pub enum StateValue {
     Unknown,
     Unavailable,
     Numeric(f64),
+    Other(String),
+}
+
+impl Display for StateValue {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            StateValue::Unknown => write!(f, "unknown"),
+            StateValue::Unavailable => write!(f, "unavailable"),
+            StateValue::Numeric(v) => write!(f, "{}", v),
+            StateValue::Other(s) => write!(f, "{}", s),
+        }
+    }
 }
 
 impl FromStr for StateValue {
@@ -57,7 +69,7 @@ impl FromStr for StateValue {
             return Ok(StateValue::Numeric(val));
         }
 
-        return Err(());
+        return Ok(StateValue::Other(val));
     }
 }
 
@@ -76,6 +88,25 @@ pub fn domain_and_name(entity_id: &String) -> Option<(&str, &str)> {
     return None;
 }
 
+fn clear_enum_for_old_state(labels: &StateLabels, old_state: &HassEntity) {
+    // Reset the previous state metric for this enum-like entity
+    let mut prev_labels = labels.clone();
+    prev_labels.state = Some(old_state.state.to_string());
+
+    metrics::STATES.remove(&prev_labels);
+}
+
+fn update_enum(labels: &mut StateLabels, event: &HassEvent, state_value: StateValue) {
+    // Clear the series based on the old state.
+    if let Some(old_state) = &event.data.old_state {
+        clear_enum_for_old_state(&labels, old_state);
+    }
+
+    // Set the metric for the current state to 1.
+    labels.state = Some(state_value.to_string());
+    let _ = metrics::STATES.get_or_create(&labels).set(1f64);
+}
+
 /// Processes a "state_changed" event.
 #[tracing::instrument]
 fn state_changed(event: HassEvent) -> Option<()> {
@@ -87,10 +118,11 @@ fn state_changed(event: HassEvent) -> Option<()> {
         .as_ref()
         .and_then(|s| s.state.parse::<StateValue>().ok());
 
-    let labels = metrics::StateLabels {
+    let mut labels = metrics::StateLabels {
         entity_id: entity_id.to_string(),
         domain: domain.to_string(),
         name: name.to_string(),
+        state: None,
     };
 
     if let Some(state_value) = state_value {
@@ -103,11 +135,19 @@ fn state_changed(event: HassEvent) -> Option<()> {
                     labels.entity_id, state_value
                 );
             }
+        } else if domain == "enum" || domain == "event" {
+            update_enum(&mut labels, &event, state_value);
+        } else {
+            info!(
+                "Didn't know what to do with an event for '{}' with state '{}'.",
+                entity_id, state_value
+            );
+            return None;
         }
     } else {
         info!(
-            "Didn't know what to do with an event for '{}' with state '{:?}'.",
-            entity_id, state_value
+            "Didn't know what to do with an event for '{}' without state.",
+            entity_id
         );
         return None;
     }
