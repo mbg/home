@@ -30,6 +30,17 @@ pub struct StateLabels {
     pub state: Option<String>,
 }
 
+impl StateLabels {
+    pub fn new(entity_id: String, domain: String, name: String) -> StateLabels {
+        StateLabels {
+            entity_id,
+            domain,
+            name,
+            state: None,
+        }
+    }
+}
+
 /// A gauge for entity states.
 pub static STATES: LazyLock<Family<StateLabels, Gauge<f64, AtomicU64>>> =
     std::sync::LazyLock::new(|| Family::<StateLabels, Gauge<f64, AtomicU64>>::default());

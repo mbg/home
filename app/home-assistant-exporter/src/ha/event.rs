@@ -151,12 +151,8 @@ fn state_changed(event: HassEvent) -> Option<()> {
     // Parse the state.
     let state_value = state.parse::<StateValue>().ok();
 
-    let mut labels = metrics::StateLabels {
-        entity_id: entity_id.to_string(),
-        domain: domain.to_string(),
-        name: name.to_string(),
-        state: None,
-    };
+    let mut labels =
+        metrics::StateLabels::new(entity_id.to_string(), domain.to_string(), name.to_string());
 
     if let Some(state_value) = state_value {
         if let StateValue::Numeric(val) = state_value {
