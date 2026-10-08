@@ -1,9 +1,13 @@
 use std::{fmt::Display, str::FromStr};
 
 use hass_rs::{EventData, HassEntity, HassEvent, WSEvent};
-use tracing::{Level, error, event, info, trace};
+use serde::{Deserialize, de::DeserializeOwned};
+use serde_json::Value;
+use tracing::{Level, error, event, info, trace, warn};
 
 use crate::metrics::{self, StateLabels};
+
+pub static ENUM_DEVICE_CLASS: &str = "enum";
 
 /// Determines if `value` is `unknown`.
 fn is_unknown(value: &String) -> bool {
@@ -73,9 +77,52 @@ impl FromStr for StateValue {
     }
 }
 
-/// Gets the ID of the entity, including the domain.
-fn entity_id(event: &HassEvent) -> &Option<String> {
-    return &event.data.entity_id;
+/// De-serialises `val` as `T` or returns the default value for `T`.
+fn from_value_or_default<T>(val: Value) -> T
+where
+    T: DeserializeOwned + Default,
+{
+    return serde_json::from_value::<T>(val).unwrap_or_default();
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CommonAttributes {
+    pub friendly_name: Option<String>,
+    pub device_class: Option<String>,
+
+    #[serde(flatten)]
+    pub event_attrs: EventAttributes,
+}
+
+impl Default for CommonAttributes {
+    fn default() -> Self {
+        CommonAttributes {
+            friendly_name: None,
+            device_class: None,
+            event_attrs: EventAttributes::default(),
+        }
+    }
+}
+
+/// Extracts common attributes from `attrs` and applies them to `labels`.
+fn apply_attr_labels(mut labels: StateLabels, attrs: &CommonAttributes) -> StateLabels {
+    labels.friendly_name = attrs.friendly_name.clone();
+    return labels;
+}
+
+#[derive(Debug, Deserialize)]
+pub struct EventAttributes {
+    pub event_type: Option<String>,
+    pub event_types: Option<Vec<String>>,
+}
+
+impl Default for EventAttributes {
+    fn default() -> Self {
+        EventAttributes {
+            event_type: None,
+            event_types: None,
+        }
+    }
 }
 
 /// Gets the HA domain and name from an entity_id.
@@ -96,10 +143,36 @@ fn clear_enum_for_old_state(labels: &StateLabels, old_state: String) {
     metrics::STATES.remove(&prev_labels);
 }
 
-fn update_enum(labels: &mut StateLabels, state_value: String, old_state: Option<String>) {
+fn update_enum(
+    labels: &mut StateLabels,
+    state_value: String,
+    old_state: Option<String>,
+    possible_values: Option<Vec<String>>,
+) {
     // Clear the series based on the old state.
     if let Some(old_state) = old_state {
+        event!(
+            Level::INFO,
+            event_type = "state_change",
+            entity_id = labels.entity_id,
+            from = old_state,
+            to = state_value
+        );
         clear_enum_for_old_state(&labels, old_state);
+    } else {
+        event!(
+            Level::INFO,
+            event_type = "state_change",
+            entity_id = labels.entity_id,
+            to = state_value
+        );
+    }
+
+    // Clear the series based on possible values.
+    if let Some(possible_values) = possible_values {
+        for possible_value in possible_values {
+            clear_enum_for_old_state(labels, possible_value);
+        }
     }
 
     // Set the metric for the current state to 1.
@@ -151,8 +224,14 @@ fn state_changed(event: HassEvent) -> Option<()> {
     // Parse the state.
     let state_value = state.parse::<StateValue>().ok();
 
-    let mut labels =
-        metrics::StateLabels::new(entity_id.to_string(), domain.to_string(), name.to_string());
+    let (old_attrs, old_state_value) =
+        old_state.map_or((None, None), |s| (Some(s.attributes), Some(s.state)));
+
+    let attributes = from_value_or_default::<CommonAttributes>(attributes);
+    let mut labels = apply_attr_labels(
+        metrics::StateLabels::new(entity_id.to_string(), domain.to_string(), name.to_string()),
+        &attributes,
+    );
 
     if let Some(state_value) = state_value {
         if let StateValue::Numeric(val) = state_value {
@@ -164,12 +243,22 @@ fn state_changed(event: HassEvent) -> Option<()> {
                     labels.entity_id, state_value
                 );
             }
-        } else if domain == "enum" || domain == "event" {
-            update_enum(
-                &mut labels,
-                state_value.to_string(),
-                old_state.map(|s| s.state),
-            );
+        } else if attributes.device_class == Some(String::from(ENUM_DEVICE_CLASS)) {
+            update_enum(&mut labels, state_value.to_string(), old_state_value, None);
+        } else if domain == "event" {
+            let old_attrs = old_attrs.map_or(EventAttributes::default(), from_value_or_default);
+
+            let event_attrs = attributes.event_attrs;
+            if let Some(event_type) = &event_attrs.event_type {
+                update_enum(
+                    &mut labels,
+                    event_type.to_string(),
+                    old_attrs.event_type,
+                    old_attrs.event_types,
+                );
+            } else {
+                warn!("No 'event_type' for '{}' state change.", entity_id);
+            }
         } else {
             info!(
                 "Didn't know what to do with an event for '{}' with state '{}'.",

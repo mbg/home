@@ -28,6 +28,11 @@ pub struct StateLabels {
     pub name: String,
     /// The state of the entity, for enum-like states.
     pub state: Option<String>,
+
+    /// The display friendly name of the entity.
+    pub friendly_name: Option<String>,
+    /// The class of device that this entity belongs to.
+    pub device_class: Option<String>,
 }
 
 impl StateLabels {
@@ -37,6 +42,8 @@ impl StateLabels {
             domain,
             name,
             state: None,
+            friendly_name: None,
+            device_class: None,
         }
     }
 }
