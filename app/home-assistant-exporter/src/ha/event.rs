@@ -89,6 +89,8 @@ where
 pub struct CommonAttributes {
     pub friendly_name: Option<String>,
     pub device_class: Option<String>,
+    pub state_class: Option<String>,
+    pub unit_of_measurement: Option<String>,
 
     #[serde(flatten)]
     pub event_attrs: EventAttributes,
@@ -99,6 +101,8 @@ impl Default for CommonAttributes {
         CommonAttributes {
             friendly_name: None,
             device_class: None,
+            state_class: None,
+            unit_of_measurement: None,
             event_attrs: EventAttributes::default(),
         }
     }
@@ -107,6 +111,9 @@ impl Default for CommonAttributes {
 /// Extracts common attributes from `attrs` and applies them to `labels`.
 fn apply_attr_labels(mut labels: StateLabels, attrs: &CommonAttributes) -> StateLabels {
     labels.friendly_name = attrs.friendly_name.clone();
+    labels.device_class = attrs.device_class.clone();
+    labels.state_class = attrs.state_class.clone();
+    labels.unit_of_measurement = attrs.unit_of_measurement.clone();
     return labels;
 }
 
