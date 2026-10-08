@@ -1,4 +1,4 @@
-use std::{fmt::Display, str::FromStr};
+use std::{collections::HashMap, fmt::Display, str::FromStr};
 
 use hass_rs::{EventData, HassEntity, HassEvent, WSEvent};
 use serde::{Deserialize, de::DeserializeOwned};
@@ -94,6 +94,9 @@ pub struct CommonAttributes {
 
     #[serde(flatten)]
     pub event_attrs: EventAttributes,
+
+    #[serde(flatten)]
+    pub unknown: HashMap<String, Value>,
 }
 
 impl Default for CommonAttributes {
@@ -104,6 +107,7 @@ impl Default for CommonAttributes {
             state_class: None,
             unit_of_measurement: None,
             event_attrs: EventAttributes::default(),
+            unknown: HashMap::new(),
         }
     }
 }
@@ -239,6 +243,17 @@ fn state_changed(event: HassEvent) -> Option<()> {
         metrics::StateLabels::new(entity_id.to_string(), domain.to_string(), name.to_string()),
         &attributes,
     );
+
+    // Report unrecognised attributes to the log so that they aren't
+    // just silently dropped.
+    for (key, val) in attributes.unknown {
+        warn!(
+            "Unknown attribute '{}' for '{}': {}",
+            key,
+            entity_id,
+            serde_json::to_string(&val).unwrap_or_default()
+        );
+    }
 
     if let Some(state_value) = state_value {
         if let StateValue::Numeric(val) = state_value {
