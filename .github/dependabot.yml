@@ -7,3 +7,10 @@ updates:
       default-days: 7
     directories:
       - /
+  - package-ecosystem: cargo
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    directories:
+      - /
