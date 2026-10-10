@@ -15,6 +15,10 @@ on:
 env:
   REGISTRY: ghcr.io
 
+concurrency:
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  group: ${{ github.ref }}
+
 jobs:
   build:
     name: Build
