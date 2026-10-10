@@ -33,6 +33,6 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Build
-        uses: mbg/actions/stack/build@v0.2
+        uses: mbg/actions/stack/build@v0.4
         with:
           upload-docs: true
