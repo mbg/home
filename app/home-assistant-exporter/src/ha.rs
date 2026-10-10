@@ -27,7 +27,10 @@ async fn attempt_connection(url: &str, token: &String) -> Option<HassClient> {
 /// Attempts to authenticate `client` using `token`.
 /// Logs if this is unsuccessful.
 /// Returns the authenticated client or nothing.
-async fn attempt_auth(mut client: HassClient, token: &String) -> Option<HassClient> {
+async fn attempt_auth(
+    mut client: HassClient,
+    token: &String,
+) -> Option<HassClient> {
     let auth_result = client.auth_with_longlivedtoken(token).await;
 
     match auth_result {

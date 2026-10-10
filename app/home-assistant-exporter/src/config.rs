@@ -37,8 +37,9 @@ pub fn get_server_config() -> ServerConfig {
 }
 
 pub fn get_home_assistant_config() -> HomeAssistantConfig {
-    let token: String = var("HOME_HA_TOKEN")
-        .expect("A token must be configured in the HOME_HA_TOKEN environment variable.");
+    let token: String = var("HOME_HA_TOKEN").expect(
+        "A token must be configured in the HOME_HA_TOKEN environment variable.",
+    );
     let server: String = var("HOME_HA_SERVER")
         .expect("The hostname of the Home Assistant server must be configured in the HOME_HA_SERVER environment variable.");
 

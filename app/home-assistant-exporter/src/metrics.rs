@@ -63,7 +63,9 @@ impl StateLabels {
 
 /// A gauge for entity states.
 pub static STATES: LazyLock<Family<StateLabels, Gauge<f64, AtomicU64>>> =
-    std::sync::LazyLock::new(|| Family::<StateLabels, Gauge<f64, AtomicU64>>::default());
+    std::sync::LazyLock::new(|| {
+        Family::<StateLabels, Gauge<f64, AtomicU64>>::default()
+    });
 
 /// Initialises the metric registry and registers the Home Assistant metrics.
 pub fn create() -> std::sync::Arc<Registry> {
@@ -71,11 +73,15 @@ pub fn create() -> std::sync::Arc<Registry> {
     let mut registry: Registry = <Registry>::with_prefix(DEFAULT_METRIC_PREFIX);
 
     registry.register(
-        "events_total",
+        "events",
         "Home Assistant event counter.",
         EVENT_COUNTER.clone(),
     );
-    registry.register("states", "Home Assistant entity states.", STATES.clone());
+    registry.register(
+        "states",
+        "Home Assistant entity states.",
+        STATES.clone(),
+    );
 
     return std::sync::Arc::new(registry);
 }

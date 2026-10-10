@@ -19,7 +19,8 @@ fn eprintln_json(message: &str, err: Box<dyn Error + Send + Sync + 'static>) {
 }
 
 /// Initialises the tracing subscriber based on the available configuration.
-fn init_tracing_subscriber() -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
+fn init_tracing_subscriber()
+-> Result<(), Box<dyn Error + Send + Sync + 'static>> {
     // Try to construct a filter based on the `HOME_LOG_FILTER` environment variable.
     let filter = match EnvFilter::try_from_env(ENV_VAR_LOG_FILTER) {
         Ok(f) => f,
@@ -59,7 +60,8 @@ async fn main() -> ExitCode {
     let registry = metrics::create();
 
     // Start the HTTP server to serve the metrics.
-    let metrics_addr = std::net::SocketAddr::new(config.server.address, config.server.port);
+    let metrics_addr =
+        std::net::SocketAddr::new(config.server.address, config.server.port);
     let metrics_listener;
 
     match server::start(metrics_addr, registry.clone()).await {
@@ -94,7 +96,9 @@ async fn main() -> ExitCode {
         info!("Connection to Home Assistant has been closed.");
     });
 
-    info!("Successfully subscribed to `state_changed` events and started listening for them.");
+    info!(
+        "Successfully subscribed to `state_changed` events and started listening for them."
+    );
 
     // Wait for any one of the tasks to complete.
     tokio::select! {

@@ -117,7 +117,10 @@ pub struct CommonAttributes {
 }
 
 /// Extracts common attributes from `attrs` and applies them to `labels`.
-fn apply_attr_labels(mut labels: StateLabels, attrs: &CommonAttributes) -> StateLabels {
+fn apply_attr_labels(
+    mut labels: StateLabels,
+    attrs: &CommonAttributes,
+) -> StateLabels {
     labels.friendly_name = attrs.friendly_name.clone();
     labels.device_class = attrs.device_class.clone();
     labels.state_class = attrs.state_class.clone();
@@ -290,7 +293,11 @@ fn state_changed(event: HassEvent) -> Option<()> {
 
     let attributes = from_value_or_default::<CommonAttributes>(attributes);
     let mut labels = apply_attr_labels(
-        metrics::StateLabels::new(entity_id.to_string(), domain.to_string(), name.to_string()),
+        metrics::StateLabels::new(
+            entity_id.to_string(),
+            domain.to_string(),
+            name.to_string(),
+        ),
         &attributes,
     );
 
@@ -308,14 +315,18 @@ fn state_changed(event: HassEvent) -> Option<()> {
     if let Some(state_value) = state_value {
         if let StateValue::Numeric(val) = state_value {
             metrics::STATES.get_or_create(&labels).set(val);
-        } else if state_value == StateValue::Unknown || state_value == StateValue::Unavailable {
+        } else if state_value == StateValue::Unknown
+            || state_value == StateValue::Unavailable
+        {
             if metrics::STATES.remove(&labels) {
                 trace!(
                     "Removed metric for '{}' since it changed to '{:?}'",
                     labels.entity_id, state_value
                 );
             }
-        } else if attributes.device_class == Some(String::from(ENUM_DEVICE_CLASS)) {
+        } else if attributes.device_class
+            == Some(String::from(ENUM_DEVICE_CLASS))
+        {
             let possible_values = attributes.options.unwrap_or_default();
             update_enum(
                 &mut labels,
@@ -329,7 +340,8 @@ fn state_changed(event: HassEvent) -> Option<()> {
                 entity_id, state_value
             );
         } else if domain == "event" {
-            let old_attrs = old_attrs.map_or(EventAttributes::default(), from_value_or_default);
+            let old_attrs = old_attrs
+                .map_or(EventAttributes::default(), from_value_or_default);
 
             let event_attrs = attributes.event_attrs;
             if let Some(event_type) = &event_attrs.event_type {
@@ -350,7 +362,9 @@ fn state_changed(event: HassEvent) -> Option<()> {
                 warn!("No 'event_type' for '{}' state change.", entity_id);
             }
         } else if domain == "climate" {
-            if let Some(current_temperature) = attributes.climate_attrs.current_temperature {
+            if let Some(current_temperature) =
+                attributes.climate_attrs.current_temperature
+            {
                 event!(
                     Level::INFO,
                     entity_id,
@@ -366,7 +380,12 @@ fn state_changed(event: HassEvent) -> Option<()> {
                 warn!("No 'current_temperature' for '{}'.", entity_id);
             }
         } else if domain == "camera" {
-            update_enum(&mut labels, state_value.to_string(), old_state_value, None);
+            update_enum(
+                &mut labels,
+                state_value.to_string(),
+                old_state_value,
+                None,
+            );
         } else if domain == "sun" {
             if let Some(azimuth) = attributes.sun_attrs.azimuth {
                 update_sub_metric(labels.clone(), "azimuth", azimuth);
@@ -375,7 +394,12 @@ fn state_changed(event: HassEvent) -> Option<()> {
                 update_sub_metric(labels.clone(), "elevation", elevation);
             }
 
-            update_enum(&mut labels, state_value.to_string(), old_state_value, None);
+            update_enum(
+                &mut labels,
+                state_value.to_string(),
+                old_state_value,
+                None,
+            );
         } else {
             info!(
                 "Didn't know what to do with an event for '{}' with state '{}': {}",

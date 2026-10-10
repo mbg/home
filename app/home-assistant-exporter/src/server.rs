@@ -15,7 +15,8 @@ use tokio::pin;
 use tokio::signal::unix::{SignalKind, signal};
 use tracing::{error, info};
 
-static OPENMETRICS_TEXT: &str = "application/openmetrics-text; version=1.0.0; charset=utf-8";
+static OPENMETRICS_TEXT: &str =
+    "application/openmetrics-text; version=1.0.0; charset=utf-8";
 
 /// Represents boxed HTTP bodies for responses.
 type BoxBody = combinators::BoxBody<Bytes, hyper::Error>;
@@ -28,7 +29,8 @@ pub fn make_body(body: Bytes) -> BoxBody {
 /// Constructs a request handler which serves metrics from `registry` to the client.
 pub fn metrics_handler(
     registry: Arc<Registry>,
-) -> impl Fn(Request<Incoming>) -> BoxFuture<'static, io::Result<Response<BoxBody>>> {
+) -> impl Fn(Request<Incoming>) -> BoxFuture<'static, io::Result<Response<BoxBody>>>
+{
     move |_request: Request<Incoming>| {
         let registry = registry.clone();
 
@@ -48,7 +50,11 @@ pub fn metrics_handler(
 }
 
 #[tracing::instrument]
-async fn handle_tcp_connection(registry: Arc<Registry>, server: http1::Builder, stream: TcpStream) {
+async fn handle_tcp_connection(
+    registry: Arc<Registry>,
+    server: http1::Builder,
+    stream: TcpStream,
+) {
     let mut shutdown_stream = signal(SignalKind::terminate()).unwrap();
     let io = TokioIo::new(stream);
     let service = service_fn(metrics_handler(registry));
@@ -90,7 +96,8 @@ pub async fn start(
 
     return Some(tokio::spawn(async move {
         while let Ok((stream, _)) = tcp_listener.accept().await {
-            handle_tcp_connection(registry.clone(), server.clone(), stream).await;
+            handle_tcp_connection(registry.clone(), server.clone(), stream)
+                .await;
         }
 
         info!("No longer accepting new TCP connections.")
