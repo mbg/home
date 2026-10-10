@@ -1,16 +1,53 @@
 use hass_rs::HassClient;
-use std::process::ExitCode;
-use tracing::{error, info};
+use std::{error::Error, process::ExitCode};
+use tracing::{error, info, level_filters::LevelFilter};
+use tracing_subscriber::EnvFilter;
 
 mod config;
 mod ha;
 mod metrics;
 mod server;
 
+/// The name of the environment variable that we expect the tracing filter
+/// configuration in.
+static ENV_VAR_LOG_FILTER: &str = "HOME_LOG_FILTER";
+
+/// Logs `message` as a rudimentary JSON object to stderr. Used before
+/// the json_subscriber is initialised to maintain a consistent output format.
+fn eprintln_json(message: &str, err: Box<dyn Error + Send + Sync + 'static>) {
+    eprintln!("{{ \"message\": \"{}: {}\" }}", message, err);
+}
+
+/// Initialises the tracing subscriber based on the available configuration.
+fn init_tracing_subscriber() -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
+    // Try to construct a filter based on the `HOME_LOG_FILTER` environment variable.
+    let filter = match EnvFilter::try_from_env(ENV_VAR_LOG_FILTER) {
+        Ok(f) => f,
+        Err(err) => {
+            eprintln_json(
+                format!("Failed to parse '{}'", ENV_VAR_LOG_FILTER).as_str(),
+                Box::new(err),
+            );
+            EnvFilter::default()
+        }
+    }
+    // Default to Level::INFO.
+    .add_directive(LevelFilter::INFO.into());
+
+    // Construct a global tracing subscriber based on the filter.
+    let subscriber = json_subscriber::fmt();
+    return subscriber.with_env_filter(filter).try_init();
+}
+
 #[tokio::main]
 async fn main() -> ExitCode {
-    // Install global collector configured based on the RUST_LOG env var.
-    json_subscriber::fmt::init();
+    // Initialise the tracing subscriber so that the configuration for it
+    // will apply to all log messages.
+    if let Err(err) = init_tracing_subscriber() {
+        // If this has failed, log the error to stderr and exit.
+        eprintln_json("Failed to initialise tracing subscriber", err);
+        return ExitCode::FAILURE;
+    }
 
     // Log something to show that we are alive.
     info!("Starting home-assistant-exporter...");
