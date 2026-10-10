@@ -54,7 +54,26 @@ async fn main() -> ExitCode {
     info!("Starting home-assistant-exporter...");
 
     // Obtain the service configuration.
-    let config = config::load();
+    let config = match config::load() {
+        Ok(cfg) => cfg,
+        Err(err) => {
+            match err {
+                config::EnvVarError::NoValue { message, var } => {
+                    error!("Environment variable '{}': {}", var, message)
+                }
+                config::EnvVarError::WithValue {
+                    message,
+                    var,
+                    value,
+                } => error!(
+                    "Environment variable '{}' with value '{}': {}",
+                    var, value, message
+                ),
+            };
+
+            return ExitCode::FAILURE;
+        }
+    };
 
     // Initialise the metrics registry.
     let registry = metrics::create();
