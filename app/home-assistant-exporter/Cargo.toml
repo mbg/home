@@ -1,0 +1,20 @@
+[package]
+name = "home-assistant-exporter"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+chrono = "0.4.45"
+futures = "0.3.34"
+hass-rs = "0.5.0"
+http-body-util = "0.1.5"
+hyper = { version = "1.11.1", features = ["server", "http1"] }
+hyper-util = { version = "0.1.21", features = ["tokio"] }
+json-subscriber = { version = "0.3.0", features = ["env-filter", "valuable"] }
+prometheus-client = "0.25.1"
+serde = "1.0.229"
+serde_json = "1.0.151"
+serde_yaml = "0.9.34"
+tokio = { version = "1.53.2", features = ["full"] }
+tracing = "0.1.44"
+tracing-subscriber = "0.3.23"

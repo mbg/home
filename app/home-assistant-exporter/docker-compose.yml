@@ -1,0 +1,13 @@
+services:
+  prometheus:
+    image: quay.io/prometheus/prometheus:v3.15.0
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - 9090:9090
+  home-assisstant-exporter:
+    build: .
+    env_file:
+      - exporter.env
+    ports:
+      - 8001:8001
