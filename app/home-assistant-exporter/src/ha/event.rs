@@ -211,7 +211,7 @@ fn update_enum(
     // Clear the series based on the old state.
     if let Some(old_state) = old_state {
         event!(
-            Level::INFO,
+            Level::DEBUG,
             event_type = "state_change",
             entity_id = labels.entity_id,
             from = old_state,
@@ -220,7 +220,7 @@ fn update_enum(
         clear_enum_for_old_state(&labels, old_state);
     } else {
         event!(
-            Level::INFO,
+            Level::DEBUG,
             event_type = "state_change",
             entity_id = labels.entity_id,
             to = state_value
