@@ -96,6 +96,19 @@ async fn main() -> ExitCode {
     }
 
     info!("Successfully connected to Home Assistant.");
+    info!("Fetching current states from Home Assistant.");
+
+    // Synchronise the current entity states.
+    match ha_client.get_states().await {
+        Err(err) => {
+            error!("Unable to fetch initial states from HA: {}", err)
+        }
+        Ok(entities) => {
+            for ent in entities {
+                let _ = ha::event::add_or_update_entity(ent, None);
+            }
+        }
+    }
 
     // Subscribe to `state_changed` events from Home Assistant.
     let mut event_receiver;
