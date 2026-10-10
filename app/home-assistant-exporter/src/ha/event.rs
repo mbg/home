@@ -1,7 +1,7 @@
 use std::{collections::HashMap, fmt::Display, str::FromStr};
 
 use hass_rs::{EventData, HassEntity, HassEvent, WSEvent};
-use serde::{Deserialize, de::DeserializeOwned};
+use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use serde_json::Value;
 use tracing::{Level, error, event, info, trace, warn};
 
@@ -85,31 +85,35 @@ where
     return serde_json::from_value::<T>(val).unwrap_or_default();
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize, Default)]
 pub struct CommonAttributes {
     pub friendly_name: Option<String>,
     pub device_class: Option<String>,
     pub state_class: Option<String>,
     pub unit_of_measurement: Option<String>,
+    pub options: Option<Vec<String>>,
+    pub attribution: Option<String>,
 
     #[serde(flatten)]
     pub event_attrs: EventAttributes,
 
     #[serde(flatten)]
-    pub unknown: HashMap<String, Value>,
-}
+    pub climate_attrs: ClimateAttributes,
 
-impl Default for CommonAttributes {
-    fn default() -> Self {
-        CommonAttributes {
-            friendly_name: None,
-            device_class: None,
-            state_class: None,
-            unit_of_measurement: None,
-            event_attrs: EventAttributes::default(),
-            unknown: HashMap::new(),
-        }
-    }
+    #[serde(flatten)]
+    pub group_attrs: GroupAttributes,
+
+    #[serde(flatten)]
+    pub weather_attrs: WeatherAttributes,
+
+    #[serde(flatten)]
+    pub camera_attrs: CameraAttributes,
+
+    #[serde(flatten)]
+    pub sun_attrs: SunAttributes,
+
+    #[serde(flatten)]
+    pub unknown: HashMap<String, Value>,
 }
 
 /// Extracts common attributes from `attrs` and applies them to `labels`.
@@ -121,19 +125,60 @@ fn apply_attr_labels(mut labels: StateLabels, attrs: &CommonAttributes) -> State
     return labels;
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize, Default)]
 pub struct EventAttributes {
     pub event_type: Option<String>,
     pub event_types: Option<Vec<String>>,
 }
 
-impl Default for EventAttributes {
-    fn default() -> Self {
-        EventAttributes {
-            event_type: None,
-            event_types: None,
-        }
-    }
+#[derive(Debug, Deserialize, Serialize, Default)]
+pub struct ClimateAttributes {
+    pub hvac_action: Option<String>,
+    pub hvac_modes: Option<Vec<String>>,
+    pub current_temperature: Option<f64>,
+    pub max_temp: Option<f64>,
+    pub min_temp: Option<f64>,
+    pub supported_features: Option<f64>,
+    pub target_temp_step: Option<f64>,
+    pub temperature: Option<f64>,
+}
+
+#[derive(Debug, Deserialize, Serialize, Default)]
+pub struct GroupAttributes {
+    pub entity_id: Option<Vec<String>>,
+}
+
+#[derive(Debug, Deserialize, Serialize, Default)]
+pub struct WeatherAttributes {
+    pub temperature_unit: Option<String>,
+    pub dew_point: Option<f64>,
+    pub pressure: Option<f64>,
+}
+
+#[derive(Debug, Deserialize, Serialize, Default)]
+pub struct CameraAttributes {
+    pub height: Option<u32>,
+    pub width: Option<u32>,
+    pub bitrate: Option<u32>,
+    pub channel_id: Option<u32>,
+    pub fps: Option<u32>,
+    pub motion_detection: Option<bool>,
+    pub entity_picture: Option<String>,
+}
+
+#[derive(Debug, Deserialize, Serialize, Default)]
+pub struct SunAttributes {
+    pub azimuth: Option<f64>,
+    pub elevation: Option<f64>,
+
+    pub rising: Option<bool>,
+
+    pub next_setting: Option<String>,
+    pub next_rising: Option<String>,
+    pub next_dusk: Option<String>,
+    pub next_midnight: Option<String>,
+    pub next_noon: Option<String>,
+    pub next_dawn: Option<String>,
 }
 
 /// Gets the HA domain and name from an entity_id.
@@ -191,6 +236,11 @@ fn update_enum(
     let _ = metrics::STATES.get_or_create(&labels).set(1f64);
 }
 
+fn update_sub_metric(mut labels: StateLabels, metric: &str, val: f64) {
+    labels.metric = Some(metric.to_string());
+    metrics::STATES.get_or_create(&labels).set(val);
+}
+
 /// Processes a "state_changed" event.
 #[tracing::instrument]
 fn state_changed(event: HassEvent) -> Option<()> {
@@ -246,7 +296,7 @@ fn state_changed(event: HassEvent) -> Option<()> {
 
     // Report unrecognised attributes to the log so that they aren't
     // just silently dropped.
-    for (key, val) in attributes.unknown {
+    for (key, val) in &attributes.unknown {
         warn!(
             "Unknown attribute '{}' for '{}': {}",
             key,
@@ -266,12 +316,30 @@ fn state_changed(event: HassEvent) -> Option<()> {
                 );
             }
         } else if attributes.device_class == Some(String::from(ENUM_DEVICE_CLASS)) {
-            update_enum(&mut labels, state_value.to_string(), old_state_value, None);
+            let possible_values = attributes.options.unwrap_or_default();
+            update_enum(
+                &mut labels,
+                state_value.to_string(),
+                old_state_value,
+                Some(possible_values),
+            );
+        } else if attributes.device_class == Some(String::from("timestamp")) {
+            info!(
+                "Entity '{}' (device class 'timestamp') was updated at '{}'.",
+                entity_id, state_value
+            );
         } else if domain == "event" {
             let old_attrs = old_attrs.map_or(EventAttributes::default(), from_value_or_default);
 
             let event_attrs = attributes.event_attrs;
             if let Some(event_type) = &event_attrs.event_type {
+                event!(
+                    Level::INFO,
+                    entity_id,
+                    event_type = "event_triggered",
+                    name = event_type,
+                );
+
                 update_enum(
                     &mut labels,
                     event_type.to_string(),
@@ -281,10 +349,39 @@ fn state_changed(event: HassEvent) -> Option<()> {
             } else {
                 warn!("No 'event_type' for '{}' state change.", entity_id);
             }
+        } else if domain == "climate" {
+            if let Some(current_temperature) = attributes.climate_attrs.current_temperature {
+                event!(
+                    Level::INFO,
+                    entity_id,
+                    event_type = "climate_change",
+                    temperature = attributes.climate_attrs.current_temperature
+                );
+
+                labels.state = Some(state_value.to_string());
+                metrics::STATES
+                    .get_or_create(&labels)
+                    .set(current_temperature);
+            } else {
+                warn!("No 'current_temperature' for '{}'.", entity_id);
+            }
+        } else if domain == "camera" {
+            update_enum(&mut labels, state_value.to_string(), old_state_value, None);
+        } else if domain == "sun" {
+            if let Some(azimuth) = attributes.sun_attrs.azimuth {
+                update_sub_metric(labels.clone(), "azimuth", azimuth);
+            }
+            if let Some(elevation) = attributes.sun_attrs.elevation {
+                update_sub_metric(labels.clone(), "elevation", elevation);
+            }
+
+            update_enum(&mut labels, state_value.to_string(), old_state_value, None);
         } else {
             info!(
-                "Didn't know what to do with an event for '{}' with state '{}'.",
-                entity_id, state_value
+                "Didn't know what to do with an event for '{}' with state '{}': {}",
+                entity_id,
+                state_value,
+                serde_json::to_string(&attributes).unwrap_or_default()
             );
             return None;
         }
