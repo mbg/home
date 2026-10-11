@@ -57,19 +57,7 @@ async fn main() -> ExitCode {
     let config = match config::load() {
         Ok(cfg) => cfg,
         Err(err) => {
-            match err {
-                config::EnvVarError::NoValue { message, var } => {
-                    error!("Environment variable '{}': {}", var, message)
-                }
-                config::EnvVarError::WithValue {
-                    message,
-                    var,
-                    value,
-                } => error!(
-                    "Environment variable '{}' with value '{}': {}",
-                    var, value, message
-                ),
-            };
+            error!("{}", err);
 
             return ExitCode::FAILURE;
         }

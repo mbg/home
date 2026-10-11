@@ -1,4 +1,7 @@
-use std::env::{VarError, var};
+use std::{
+    env::{VarError, var},
+    fmt::Display,
+};
 
 /// The name of the environment variable that we expect the address the
 /// metrics server should listen on in.
@@ -49,6 +52,25 @@ pub enum EnvVarError {
         var: String,
         value: String,
     },
+}
+
+impl Display for EnvVarError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            EnvVarError::NoValue { message, var } => {
+                write!(f, "Environment variable '{}': {}", var, message)
+            }
+            EnvVarError::WithValue {
+                message,
+                var,
+                value,
+            } => write!(
+                f,
+                "Environment variable '{}' with value '{}': {}",
+                var, value, message
+            ),
+        }
+    }
 }
 
 pub fn required_env_var(
