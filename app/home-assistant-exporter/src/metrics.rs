@@ -6,8 +6,6 @@ use prometheus_client::{
     registry::Registry,
 };
 
-use crate::config::DEFAULT_METRIC_PREFIX;
-
 #[derive(Clone, Debug, Hash, PartialEq, Eq, EncodeLabelSet)]
 pub struct EventLabels {
     /// The event type identifier.
@@ -68,9 +66,9 @@ pub static STATES: LazyLock<Family<StateLabels, Gauge<f64, AtomicU64>>> =
     });
 
 /// Initialises the metric registry and registers the Home Assistant metrics.
-pub fn create() -> std::sync::Arc<Registry> {
+pub fn create(prefix: String) -> std::sync::Arc<Registry> {
     // Create the metric registry with the default prefix.
-    let mut registry: Registry = <Registry>::with_prefix(DEFAULT_METRIC_PREFIX);
+    let mut registry: Registry = <Registry>::with_prefix(prefix);
 
     registry.register(
         "events",

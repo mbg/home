@@ -74,7 +74,7 @@ async fn main() -> ExitCode {
     };
 
     // Initialise the metrics registry.
-    let registry = metrics::create();
+    let registry = metrics::create(config.server.prefix);
 
     // Start the HTTP server to serve the metrics.
     let metrics_addr =
