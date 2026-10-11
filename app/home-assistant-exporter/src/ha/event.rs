@@ -108,13 +108,13 @@ pub struct CommonAttributes {
     pub group_attrs: GroupAttributes,
 
     #[serde(flatten)]
-    pub weather_attrs: WeatherAttributes,
-
-    #[serde(flatten)]
     pub camera_attrs: CameraAttributes,
 
     #[serde(flatten)]
     pub sun_attrs: SunAttributes,
+
+    #[serde(flatten)]
+    pub entity_attrs: entity::Attributes,
 
     #[serde(flatten)]
     pub unknown: HashMap<String, Value>,
@@ -236,9 +236,17 @@ fn update_enum(
     let _ = metrics::STATES.get_or_create(&labels).set(1f64);
 }
 
-fn update_sub_metric(mut labels: StateLabels, metric: &str, val: f64) {
-    labels.metric = Some(metric.to_string());
-    metrics::STATES.get_or_create(&labels).set(val);
+fn update_sub_metric(
+    mut labels: StateLabels,
+    metric: &str,
+    val: Option<f64>,
+    unit: Option<String>,
+) {
+    if let Some(val) = val {
+        labels.metric = Some(metric.to_string());
+        labels.unit_of_measurement = unit;
+        metrics::STATES.get_or_create(&labels).set(val);
+    }
 }
 
 /// Adds or updates the metric(s) for `entity`.
@@ -366,12 +374,75 @@ pub fn add_or_update_entity(
                 None,
             );
         } else if domain == "sun" {
-            if let Some(azimuth) = attributes.sun_attrs.azimuth {
-                update_sub_metric(labels.clone(), "azimuth", azimuth);
-            }
-            if let Some(elevation) = attributes.sun_attrs.elevation {
-                update_sub_metric(labels.clone(), "elevation", elevation);
-            }
+            update_sub_metric(
+                labels.clone(),
+                "azimuth",
+                attributes.sun_attrs.azimuth,
+                Some("°".to_string()),
+            );
+
+            update_sub_metric(
+                labels.clone(),
+                "elevation",
+                attributes.sun_attrs.elevation,
+                Some("°".to_string()),
+            );
+
+            update_enum(
+                &mut labels,
+                state_value.to_string(),
+                old_state_value,
+                None,
+            );
+        } else if domain == "weather" {
+            update_sub_metric(
+                labels.clone(),
+                "cloud_coverage",
+                attributes.entity_attrs.weather.cloud_coverage,
+                Some("%".to_string()),
+            );
+
+            update_sub_metric(
+                labels.clone(),
+                "dew_point",
+                attributes.entity_attrs.weather.dew_point,
+                attributes.entity_attrs.weather.temperature_unit,
+            );
+
+            update_sub_metric(
+                labels.clone(),
+                "humidity",
+                attributes.entity_attrs.weather.humidity,
+                Some("%".to_string()),
+            );
+
+            update_sub_metric(
+                labels.clone(),
+                "pressure",
+                attributes.entity_attrs.weather.pressure,
+                attributes.entity_attrs.weather.pressure_unit,
+            );
+
+            update_sub_metric(
+                labels.clone(),
+                "uv_index",
+                attributes.entity_attrs.weather.uv_index,
+                None,
+            );
+
+            update_sub_metric(
+                labels.clone(),
+                "wind_bearing",
+                attributes.entity_attrs.weather.wind_bearing,
+                Some("°".to_string()),
+            );
+
+            update_sub_metric(
+                labels.clone(),
+                "wind_speed",
+                attributes.entity_attrs.weather.wind_speed,
+                attributes.entity_attrs.weather.wind_speed_unit,
+            );
 
             update_enum(
                 &mut labels,
