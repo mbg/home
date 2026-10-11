@@ -5,7 +5,10 @@ use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use serde_json::Value;
 use tracing::{Level, error, event, info, trace, warn};
 
-use crate::metrics::{self, StateLabels};
+use crate::{
+    config,
+    metrics::{self, StateLabels},
+};
 
 pub static ENUM_DEVICE_CLASS: &str = "enum";
 
@@ -246,6 +249,7 @@ fn update_sub_metric(mut labels: StateLabels, metric: &str, val: f64) {
 
 /// Adds or updates the metric(s) for `entity`.
 pub fn add_or_update_entity(
+    config: &config::HomeAssistantConfig,
     entity: HassEntity,
     old_state: Option<HassEntity>,
 ) -> Option<()> {
@@ -403,7 +407,10 @@ pub fn add_or_update_entity(
 
 /// Processes a "state_changed" event.
 // #[tracing::instrument]
-fn state_changed(event: HassEvent) -> Option<()> {
+fn state_changed(
+    config: &config::HomeAssistantConfig,
+    event: HassEvent,
+) -> Option<()> {
     // Deconstruct the event data.
     let EventData {
         entity_id: _,
@@ -421,11 +428,11 @@ fn state_changed(event: HassEvent) -> Option<()> {
         }
     };
 
-    return add_or_update_entity(entity, old_state);
+    return add_or_update_entity(config, entity, old_state);
 }
 
 /// Processes a web socket event from Home Assistant.
-pub async fn process(message: WSEvent) {
+pub async fn process(config: &config::HomeAssistantConfig, message: WSEvent) {
     let event = message.event;
 
     metrics::EVENT_COUNTER
@@ -435,7 +442,7 @@ pub async fn process(message: WSEvent) {
         .inc();
 
     if event.event_type == "state_changed" {
-        state_changed(event);
+        state_changed(config, event);
     } else {
         event!(
             Level::INFO,
