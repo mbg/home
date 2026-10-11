@@ -1,3 +1,4 @@
+use clap::Parser;
 use hass_rs::HassClient;
 use std::{error::Error, process::ExitCode};
 use tracing::{error, info, level_filters::LevelFilter};
@@ -42,6 +43,15 @@ fn init_tracing_subscriber()
 
 #[tokio::main]
 async fn main() -> ExitCode {
+    // Try to parse the command line arguments.
+    let cmd_args = match config::CmdArgs::try_parse() {
+        Ok(args) => args,
+        Err(err) => {
+            println!("{}", err);
+            return ExitCode::FAILURE;
+        }
+    };
+
     // Initialise the tracing subscriber so that the configuration for it
     // will apply to all log messages.
     if let Err(err) = init_tracing_subscriber() {
@@ -54,7 +64,7 @@ async fn main() -> ExitCode {
     info!("Starting home-assistant-exporter...");
 
     // Obtain the service configuration.
-    let config = match config::load() {
+    let config = match config::load(cmd_args) {
         Ok(cfg) => cfg,
         Err(err) => {
             error!("{}", err);

@@ -3,6 +3,8 @@ use std::{
     fmt::Display,
 };
 
+use clap::Parser;
+
 /// The name of the environment variable that we expect the address the
 /// metrics server should listen on in.
 static ENV_VAR_SERVER_ADDRESS: &str = "HOME_SERVER_ADDRESS";
@@ -26,6 +28,13 @@ pub static DEFAULT_METRIC_ADDRESS: std::net::Ipv4Addr =
 
 /// The default prefix for prometheus metrics.
 pub static DEFAULT_METRIC_PREFIX: &str = "ha";
+
+#[derive(Parser, Debug)]
+#[command(version, about, long_about = None)]
+pub struct CmdArgs {
+    /// Path to the configuration file to use.
+    config_file: Option<String>,
+}
 
 pub struct ServerConfig {
     pub address: std::net::IpAddr,
@@ -69,6 +78,20 @@ impl Display for EnvVarError {
                 "Environment variable '{}' with value '{}': {}",
                 var, value, message
             ),
+        }
+    }
+}
+
+pub enum ConfigError {
+    IOError(std::io::Error),
+    EnvVarError(EnvVarError),
+}
+
+impl Display for ConfigError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ConfigError::IOError(error) => error.fmt(f),
+            ConfigError::EnvVarError(env_var_error) => env_var_error.fmt(f),
         }
     }
 }
@@ -119,8 +142,10 @@ pub fn get_home_assistant_config() -> Result<HomeAssistantConfig, EnvVarError> {
 }
 
 /// Loads the configuration.
-pub fn load() -> Result<HomeAssistantExporterConfig, EnvVarError> {
+pub fn load(
+    cmd_args: CmdArgs,
+) -> Result<HomeAssistantExporterConfig, ConfigError> {
     let server = get_server_config();
-    let ha = get_home_assistant_config()?;
+    let ha = get_home_assistant_config().map_err(ConfigError::EnvVarError)?;
     return Ok(HomeAssistantExporterConfig { server, ha });
 }
