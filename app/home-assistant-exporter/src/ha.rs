@@ -3,6 +3,7 @@ use tracing::{error, info};
 
 use crate::config::HomeAssistantConfig;
 
+pub mod entity;
 pub mod event;
 
 /// Attempts to initialise a Home Assistant web socket client for `url`.

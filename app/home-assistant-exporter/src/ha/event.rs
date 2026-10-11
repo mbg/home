@@ -7,6 +7,7 @@ use tracing::{Level, error, event, info, trace, warn};
 
 use crate::{
     config,
+    ha::entity::weather::WeatherAttributes,
     metrics::{self, StateLabels},
 };
 
@@ -152,13 +153,6 @@ pub struct ClimateAttributes {
 #[derive(Debug, Deserialize, Serialize, Default)]
 pub struct GroupAttributes {
     pub entity_id: Option<Vec<String>>,
-}
-
-#[derive(Debug, Deserialize, Serialize, Default)]
-pub struct WeatherAttributes {
-    pub temperature_unit: Option<String>,
-    pub dew_point: Option<f64>,
-    pub pressure: Option<f64>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Default)]
