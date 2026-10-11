@@ -13,6 +13,7 @@ use std::sync::Arc;
 use tokio::net::{TcpListener, TcpStream};
 use tokio::pin;
 use tokio::signal::unix::{SignalKind, signal};
+use tokio::sync::watch;
 use tracing::{error, info};
 
 static OPENMETRICS_TEXT: &str =
@@ -29,35 +30,58 @@ pub fn make_body(body: Bytes) -> BoxBody {
 /// Constructs a request handler which serves metrics from `registry` to the client.
 pub fn metrics_handler(
     registry: Arc<Registry>,
+    metrics_ready: watch::Receiver<bool>,
 ) -> impl Fn(Request<Incoming>) -> BoxFuture<'static, io::Result<Response<BoxBody>>>
 {
-    move |_request: Request<Incoming>| {
-        let registry = registry.clone();
+    move |request: Request<Incoming>| {
+        if request.uri().path() == "/health" {
+            if *metrics_ready.borrow() {
+                return Box::pin(async {
+                    Ok(Response::builder()
+                        .status(200)
+                        .body(make_body("OK".into()))
+                        .unwrap())
+                });
+            } else {
+                return Box::pin(async {
+                    Ok(Response::builder()
+                        .status(503)
+                        .body(make_body("Service unavailable".into()))
+                        .unwrap())
+                });
+            }
+        } else {
+            let registry = registry.clone();
 
-        Box::pin(async move {
-            let mut buf = String::new();
-            encode(&mut buf, &registry)
-                .map_err(std::io::Error::other)
-                .map(|_| {
-                    let body = make_body(Bytes::from(buf));
-                    Response::builder()
-                        .header(hyper::header::CONTENT_TYPE, OPENMETRICS_TEXT)
-                        .body(body)
-                        .unwrap()
-                })
-        })
+            Box::pin(async move {
+                let mut buf = String::new();
+                encode(&mut buf, &registry)
+                    .map_err(std::io::Error::other)
+                    .map(|_| {
+                        let body = make_body(Bytes::from(buf));
+                        Response::builder()
+                            .header(
+                                hyper::header::CONTENT_TYPE,
+                                OPENMETRICS_TEXT,
+                            )
+                            .body(body)
+                            .unwrap()
+                    })
+            })
+        }
     }
 }
 
 #[tracing::instrument]
 async fn handle_tcp_connection(
     registry: Arc<Registry>,
+    metrics_ready: watch::Receiver<bool>,
     server: http1::Builder,
     stream: TcpStream,
 ) {
     let mut shutdown_stream = signal(SignalKind::terminate()).unwrap();
     let io = TokioIo::new(stream);
-    let service = service_fn(metrics_handler(registry));
+    let service = service_fn(metrics_handler(registry, metrics_ready));
 
     tokio::task::spawn(async move {
         let connection = server.serve_connection(io, service);
@@ -79,6 +103,7 @@ async fn handle_tcp_connection(
 pub async fn start(
     metrics_addr: SocketAddr,
     registry: Arc<Registry>,
+    metrics_ready: watch::Receiver<bool>,
 ) -> Option<tokio::task::JoinHandle<()>> {
     info!("Starting metrics server on {metrics_addr}");
 
@@ -96,8 +121,13 @@ pub async fn start(
 
     return Some(tokio::spawn(async move {
         while let Ok((stream, _)) = tcp_listener.accept().await {
-            handle_tcp_connection(registry.clone(), server.clone(), stream)
-                .await;
+            handle_tcp_connection(
+                registry.clone(),
+                metrics_ready.clone(),
+                server.clone(),
+                stream,
+            )
+            .await;
         }
 
         info!("No longer accepting new TCP connections.")
