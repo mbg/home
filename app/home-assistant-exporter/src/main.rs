@@ -88,7 +88,7 @@ async fn main() -> ExitCode {
 
     // Initialise the Home Assistant web socket client.
     let mut ha_client: HassClient;
-    match ha::connect(&config.ha).await {
+    match ha::connect(&config.home_assistant).await {
         None => return ExitCode::FAILURE,
         Some(client) => ha_client = client,
     }
