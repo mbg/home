@@ -251,7 +251,7 @@ fn update_sub_metric(
 
 /// Adds or updates the metric(s) for `entity`.
 pub fn add_or_update_entity(
-    config: &config::HomeAssistantConfig,
+    config: &config::HomeAssistantExporterConfig,
     entity: HassEntity,
     old_state: Option<HassEntity>,
 ) -> Option<()> {
@@ -457,6 +457,11 @@ pub fn add_or_update_entity(
                 state_value,
                 serde_json::to_string(&attributes).unwrap_or_default()
             );
+
+            if config.debug.unknown {
+                metrics::UNSAVED_ENTITIES.get_or_create(&labels).inc();
+            }
+
             return None;
         }
     } else {
@@ -464,6 +469,11 @@ pub fn add_or_update_entity(
             "Didn't know what to do with an event for '{}' without state.",
             entity_id
         );
+
+        if config.debug.unknown {
+            metrics::UNSAVED_ENTITIES.get_or_create(&labels).inc();
+        }
+
         return None;
     }
 
@@ -473,7 +483,7 @@ pub fn add_or_update_entity(
 /// Processes a "state_changed" event.
 // #[tracing::instrument]
 fn state_changed(
-    config: &config::HomeAssistantConfig,
+    config: &config::HomeAssistantExporterConfig,
     event: HassEvent,
 ) -> Option<()> {
     // Deconstruct the event data.
@@ -497,7 +507,10 @@ fn state_changed(
 }
 
 /// Processes a web socket event from Home Assistant.
-pub async fn process(config: &config::HomeAssistantConfig, message: WSEvent) {
+pub async fn process(
+    config: &config::HomeAssistantExporterConfig,
+    message: WSEvent,
+) {
     let event = message.event;
 
     metrics::EVENT_COUNTER

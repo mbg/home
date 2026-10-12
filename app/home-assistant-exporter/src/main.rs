@@ -75,7 +75,7 @@ async fn main() -> ExitCode {
     };
 
     // Initialise the metrics registry.
-    let registry = metrics::create(config.server.prefix);
+    let registry = metrics::create(config.server.prefix.clone(), &config.debug);
 
     // Start the HTTP server to serve the metrics.
     let metrics_addr =
@@ -106,11 +106,7 @@ async fn main() -> ExitCode {
         }
         Ok(entities) => {
             for ent in entities {
-                let _ = ha::event::add_or_update_entity(
-                    &config.home_assistant,
-                    ent,
-                    None,
-                );
+                let _ = ha::event::add_or_update_entity(&config, ent, None);
             }
         }
     }
@@ -128,7 +124,7 @@ async fn main() -> ExitCode {
     // Spawn a task to handle events we receive from Home Assistant.
     let event_listener = tokio::spawn(async move {
         while let Some(message) = event_receiver.recv().await {
-            ha::event::process(&config.home_assistant, message).await;
+            ha::event::process(&config, message).await;
         }
         info!("Connection to Home Assistant has been closed.");
     });

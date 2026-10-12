@@ -6,6 +6,8 @@ use prometheus_client::{
     registry::Registry,
 };
 
+use crate::config;
+
 #[derive(Clone, Debug, Hash, PartialEq, Eq, EncodeLabelSet)]
 pub struct EventLabels {
     /// The event type identifier.
@@ -65,8 +67,15 @@ pub static STATES: LazyLock<Family<StateLabels, Gauge<f64, AtomicU64>>> =
         Family::<StateLabels, Gauge<f64, AtomicU64>>::default()
     });
 
+/// A family of counters for entities whose state couldn't be recorded.
+pub static UNSAVED_ENTITIES: LazyLock<Family<StateLabels, Counter>> =
+    std::sync::LazyLock::new(|| Family::<StateLabels, Counter>::default());
+
 /// Initialises the metric registry and registers the Home Assistant metrics.
-pub fn create(prefix: String) -> std::sync::Arc<Registry> {
+pub fn create(
+    prefix: String,
+    debug: &config::debug::Config,
+) -> std::sync::Arc<Registry> {
     // Create the metric registry with the default prefix.
     let mut registry: Registry = <Registry>::with_prefix(prefix);
 
@@ -80,6 +89,14 @@ pub fn create(prefix: String) -> std::sync::Arc<Registry> {
         "Home Assistant entity states.",
         STATES.clone(),
     );
+
+    if debug.unknown {
+        registry.register(
+            "unsaved_entities",
+            "Home Assistant entities whose state couldn't be recorded",
+            UNSAVED_ENTITIES.clone(),
+        );
+    }
 
     return std::sync::Arc::new(registry);
 }

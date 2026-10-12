@@ -100,9 +100,14 @@ impl Default for HomeAssistantConfig {
     }
 }
 
+pub mod debug;
+
 #[derive(Debug, Default, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct HomeAssistantExporterConfig {
+    #[serde(default)]
+    pub debug: debug::Config,
+
     /// The configuration for the metrics server.
     #[serde(default)]
     pub server: ServerConfig,
