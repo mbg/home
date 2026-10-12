@@ -373,6 +373,13 @@ pub fn add_or_update_entity(
                 old_state_value,
                 None,
             );
+        } else if domain == "device_tracker" {
+            update_enum(
+                &mut labels,
+                state_value.to_string(),
+                old_state_value,
+                None,
+            );
         } else if domain == "sun" {
             update_sub_metric(
                 labels.clone(),
