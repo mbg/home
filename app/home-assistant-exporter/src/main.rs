@@ -1,3 +1,4 @@
+use clap::Parser;
 use hass_rs::HassClient;
 use std::{error::Error, process::ExitCode};
 use tracing::{error, info, level_filters::LevelFilter};
@@ -42,6 +43,15 @@ fn init_tracing_subscriber()
 
 #[tokio::main]
 async fn main() -> ExitCode {
+    // Try to parse the command line arguments.
+    let cmd_args = match config::CmdArgs::try_parse() {
+        Ok(args) => args,
+        Err(err) => {
+            println!("{}", err);
+            return ExitCode::FAILURE;
+        }
+    };
+
     // Initialise the tracing subscriber so that the configuration for it
     // will apply to all log messages.
     if let Err(err) = init_tracing_subscriber() {
@@ -54,22 +64,10 @@ async fn main() -> ExitCode {
     info!("Starting home-assistant-exporter...");
 
     // Obtain the service configuration.
-    let config = match config::load() {
+    let config = match config::load(cmd_args) {
         Ok(cfg) => cfg,
         Err(err) => {
-            match err {
-                config::EnvVarError::NoValue { message, var } => {
-                    error!("Environment variable '{}': {}", var, message)
-                }
-                config::EnvVarError::WithValue {
-                    message,
-                    var,
-                    value,
-                } => error!(
-                    "Environment variable '{}' with value '{}': {}",
-                    var, value, message
-                ),
-            };
+            error!("{}", err);
 
             return ExitCode::FAILURE;
         }
@@ -90,12 +88,29 @@ async fn main() -> ExitCode {
 
     // Initialise the Home Assistant web socket client.
     let mut ha_client: HassClient;
-    match ha::connect(&config.ha).await {
+    match ha::connect(&config.home_assistant).await {
         None => return ExitCode::FAILURE,
         Some(client) => ha_client = client,
     }
 
     info!("Successfully connected to Home Assistant.");
+    info!("Fetching current states from Home Assistant.");
+
+    // Synchronise the current entity states.
+    match ha_client.get_states().await {
+        Err(err) => {
+            error!("Unable to fetch initial states from HA: {}", err)
+        }
+        Ok(entities) => {
+            for ent in entities {
+                let _ = ha::event::add_or_update_entity(
+                    &config.home_assistant,
+                    ent,
+                    None,
+                );
+            }
+        }
+    }
 
     // Subscribe to `state_changed` events from Home Assistant.
     let mut event_receiver;
@@ -110,7 +125,7 @@ async fn main() -> ExitCode {
     // Spawn a task to handle events we receive from Home Assistant.
     let event_listener = tokio::spawn(async move {
         while let Some(message) = event_receiver.recv().await {
-            ha::event::process(message).await;
+            ha::event::process(&config.home_assistant, message).await;
         }
         info!("Connection to Home Assistant has been closed.");
     });

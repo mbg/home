@@ -12,4 +12,4 @@ FROM base
 COPY --from=builder \
     /usr/local/cargo/bin/home-assistant-exporter \
     /usr/local/bin/home-assistant-exporter
-CMD ["home-assistant-exporter"]
+CMD ["home-assistant-exporter", "/etc/home/config/home-assistant.yml"]

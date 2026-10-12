@@ -5,7 +5,10 @@ use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use serde_json::Value;
 use tracing::{Level, error, event, info, trace, warn};
 
-use crate::metrics::{self, StateLabels};
+use crate::{
+    config,
+    metrics::{self, StateLabels},
+};
 
 pub static ENUM_DEVICE_CLASS: &str = "enum";
 
@@ -211,7 +214,7 @@ fn update_enum(
     // Clear the series based on the old state.
     if let Some(old_state) = old_state {
         event!(
-            Level::INFO,
+            Level::DEBUG,
             event_type = "state_change",
             entity_id = labels.entity_id,
             from = old_state,
@@ -220,7 +223,7 @@ fn update_enum(
         clear_enum_for_old_state(&labels, old_state);
     } else {
         event!(
-            Level::INFO,
+            Level::DEBUG,
             event_type = "state_change",
             entity_id = labels.entity_id,
             to = state_value
@@ -244,25 +247,18 @@ fn update_sub_metric(mut labels: StateLabels, metric: &str, val: f64) {
     metrics::STATES.get_or_create(&labels).set(val);
 }
 
-/// Processes a "state_changed" event.
-#[tracing::instrument]
-fn state_changed(event: HassEvent) -> Option<()> {
-    // Deconstruct the event data.
-    let EventData {
+/// Adds or updates the metric(s) for `entity`.
+pub fn add_or_update_entity(
+    config: &config::HomeAssistantConfig,
+    entity: HassEntity,
+    old_state: Option<HassEntity>,
+) -> Option<()> {
+    let HassEntity {
         entity_id,
-        new_state,
-        old_state,
-        extra: _extra,
-    } = event.data;
-
-    // Check that we have an entity_id. Fail if not.
-    let entity_id = match entity_id {
-        Some(s) => s,
-        None => {
-            error!("Event without an entity_id.");
-            return None;
-        }
-    };
+        state,
+        attributes,
+        ..
+    } = entity;
 
     // Extract the domain and name from the entity_id.
     // Fail if the format doesn't match our expectations.
@@ -270,17 +266,6 @@ fn state_changed(event: HassEvent) -> Option<()> {
         Some(r) => r,
         None => {
             error!("Invalid entity_id '{}'.", entity_id);
-            return None;
-        }
-    };
-
-    // Deconstruct the new entity state or fail if there isn't one.
-    let HassEntity {
-        state, attributes, ..
-    } = match new_state {
-        Some(s) => s,
-        None => {
-            error!("No new_state for event.");
             return None;
         }
     };
@@ -420,8 +405,34 @@ fn state_changed(event: HassEvent) -> Option<()> {
     return Some(());
 }
 
+/// Processes a "state_changed" event.
+// #[tracing::instrument]
+fn state_changed(
+    config: &config::HomeAssistantConfig,
+    event: HassEvent,
+) -> Option<()> {
+    // Deconstruct the event data.
+    let EventData {
+        entity_id: _,
+        new_state,
+        old_state,
+        extra: _extra,
+    } = event.data;
+
+    // Deconstruct the new entity state or fail if there isn't one.
+    let entity = match new_state {
+        Some(s) => s,
+        None => {
+            error!("No new_state for event.");
+            return None;
+        }
+    };
+
+    return add_or_update_entity(config, entity, old_state);
+}
+
 /// Processes a web socket event from Home Assistant.
-pub async fn process(message: WSEvent) {
+pub async fn process(config: &config::HomeAssistantConfig, message: WSEvent) {
     let event = message.event;
 
     metrics::EVENT_COUNTER
@@ -431,7 +442,7 @@ pub async fn process(message: WSEvent) {
         .inc();
 
     if event.event_type == "state_changed" {
-        state_changed(event);
+        state_changed(config, event);
     } else {
         event!(
             Level::INFO,

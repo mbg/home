@@ -7,3 +7,17 @@ updates:
       default-days: 7
     directories:
       - /
+  - package-ecosystem: docker
+    schedule:
+      interval: monthly
+    cooldown:
+      default-days: 7
+    directories:
+      - app/home-assistant-exporter/
+  - package-ecosystem: cargo
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    directories:
+      - /
