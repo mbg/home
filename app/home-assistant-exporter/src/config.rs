@@ -80,6 +80,8 @@ impl Default for ServerConfig {
     }
 }
 
+pub mod ha;
+
 #[derive(Debug, Deserialize)]
 pub struct HomeAssistantConfig {
     /// The long-lived token to authenticate to HA with.
@@ -89,6 +91,10 @@ pub struct HomeAssistantConfig {
     /// The hostname of the HA server.
     #[serde(default)]
     pub server: String,
+
+    /// What state changes to ignore.
+    #[serde(default)]
+    pub ignore: ha::IgnoreConfig,
 }
 
 impl Default for HomeAssistantConfig {
@@ -96,6 +102,7 @@ impl Default for HomeAssistantConfig {
         Self {
             token: Default::default(),
             server: DEFAULT_HA_SERVER.to_string(),
+            ignore: Default::default(),
         }
     }
 }

@@ -7,7 +7,7 @@ use tracing::{Level, error, event, info, trace, warn};
 
 use crate::{
     config,
-    ha::entity::weather::WeatherAttributes,
+    ha::entity::{self},
     metrics::{self, StateLabels},
 };
 
@@ -291,6 +291,11 @@ pub fn add_or_update_entity(
     // Report unrecognised attributes to the log so that they aren't
     // just silently dropped.
     for (key, val) in &attributes.unknown {
+        for ignore in &config.home_assistant.ignore.attributes {
+            if ignore.applies_to_attr(domain, key) {
+                continue;
+            }
+        }
         warn!(
             "Unknown attribute '{}' for '{}': {}",
             key,
