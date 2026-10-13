@@ -1,5 +1,6 @@
 use std::{collections::HashMap, fmt::Display, str::FromStr};
 
+use chrono::Utc;
 use hass_rs::{EventData, HassEntity, HassEvent, WSEvent};
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use serde_json::Value;
@@ -49,6 +50,7 @@ pub enum StateValue {
     Unknown,
     Unavailable,
     Numeric(f64),
+    DateTime(chrono::DateTime<Utc>),
     Other(String),
 }
 
@@ -58,6 +60,7 @@ impl Display for StateValue {
             StateValue::Unknown => write!(f, "unknown"),
             StateValue::Unavailable => write!(f, "unavailable"),
             StateValue::Numeric(v) => write!(f, "{}", v),
+            StateValue::DateTime(dt) => write!(f, "{}", dt),
             StateValue::Other(s) => write!(f, "{}", s),
         }
     }
@@ -75,6 +78,8 @@ impl FromStr for StateValue {
             return Ok(StateValue::Unavailable);
         } else if let Some(val) = value_as_f64(&val) {
             return Ok(StateValue::Numeric(val));
+        } else if let Ok(dt) = chrono::DateTime::parse_from_rfc3339(s) {
+            return Ok(StateValue::DateTime(dt.to_utc()));
         }
 
         return Ok(StateValue::Other(val));
