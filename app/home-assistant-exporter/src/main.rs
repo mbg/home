@@ -1,6 +1,7 @@
 use clap::Parser;
 use hass_rs::HassClient;
 use std::{error::Error, process::ExitCode};
+use tokio::sync::watch;
 use tracing::{error, info, level_filters::LevelFilter};
 use tracing_subscriber::EnvFilter;
 
@@ -74,14 +75,16 @@ async fn main() -> ExitCode {
     };
 
     // Initialise the metrics registry.
-    let registry = metrics::create();
+    let registry = metrics::create(config.server.prefix.clone(), &config.debug);
 
     // Start the HTTP server to serve the metrics.
     let metrics_addr =
         std::net::SocketAddr::new(config.server.address, config.server.port);
     let metrics_listener;
 
-    match server::start(metrics_addr, registry.clone()).await {
+    let (tx, rx) = watch::channel(false);
+
+    match server::start(metrics_addr, registry.clone(), rx).await {
         None => return ExitCode::FAILURE,
         Some(listener) => metrics_listener = listener,
     }
@@ -103,11 +106,7 @@ async fn main() -> ExitCode {
         }
         Ok(entities) => {
             for ent in entities {
-                let _ = ha::event::add_or_update_entity(
-                    &config.home_assistant,
-                    ent,
-                    None,
-                );
+                let _ = ha::event::add_or_update_entity(&config, ent, None);
             }
         }
     }
@@ -125,7 +124,7 @@ async fn main() -> ExitCode {
     // Spawn a task to handle events we receive from Home Assistant.
     let event_listener = tokio::spawn(async move {
         while let Some(message) = event_receiver.recv().await {
-            ha::event::process(&config.home_assistant, message).await;
+            ha::event::process(&config, message).await;
         }
         info!("Connection to Home Assistant has been closed.");
     });
@@ -133,6 +132,7 @@ async fn main() -> ExitCode {
     info!(
         "Successfully subscribed to `state_changed` events and started listening for them."
     );
+    let _ = tx.send(true);
 
     // Wait for any one of the tasks to complete.
     tokio::select! {

@@ -1,5 +1,6 @@
 use std::{collections::HashMap, fmt::Display, str::FromStr};
 
+use chrono::Utc;
 use hass_rs::{EventData, HassEntity, HassEvent, WSEvent};
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use serde_json::Value;
@@ -7,6 +8,7 @@ use tracing::{Level, error, event, info, trace, warn};
 
 use crate::{
     config,
+    ha::entity::{self},
     metrics::{self, StateLabels},
 };
 
@@ -48,6 +50,7 @@ pub enum StateValue {
     Unknown,
     Unavailable,
     Numeric(f64),
+    DateTime(chrono::DateTime<Utc>),
     Other(String),
 }
 
@@ -57,6 +60,7 @@ impl Display for StateValue {
             StateValue::Unknown => write!(f, "unknown"),
             StateValue::Unavailable => write!(f, "unavailable"),
             StateValue::Numeric(v) => write!(f, "{}", v),
+            StateValue::DateTime(dt) => write!(f, "{}", dt),
             StateValue::Other(s) => write!(f, "{}", s),
         }
     }
@@ -74,6 +78,8 @@ impl FromStr for StateValue {
             return Ok(StateValue::Unavailable);
         } else if let Some(val) = value_as_f64(&val) {
             return Ok(StateValue::Numeric(val));
+        } else if let Ok(dt) = chrono::DateTime::parse_from_rfc3339(s) {
+            return Ok(StateValue::DateTime(dt.to_utc()));
         }
 
         return Ok(StateValue::Other(val));
@@ -107,13 +113,13 @@ pub struct CommonAttributes {
     pub group_attrs: GroupAttributes,
 
     #[serde(flatten)]
-    pub weather_attrs: WeatherAttributes,
-
-    #[serde(flatten)]
     pub camera_attrs: CameraAttributes,
 
     #[serde(flatten)]
     pub sun_attrs: SunAttributes,
+
+    #[serde(flatten)]
+    pub entity_attrs: entity::Attributes,
 
     #[serde(flatten)]
     pub unknown: HashMap<String, Value>,
@@ -152,13 +158,6 @@ pub struct ClimateAttributes {
 #[derive(Debug, Deserialize, Serialize, Default)]
 pub struct GroupAttributes {
     pub entity_id: Option<Vec<String>>,
-}
-
-#[derive(Debug, Deserialize, Serialize, Default)]
-pub struct WeatherAttributes {
-    pub temperature_unit: Option<String>,
-    pub dew_point: Option<f64>,
-    pub pressure: Option<f64>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Default)]
@@ -242,14 +241,22 @@ fn update_enum(
     let _ = metrics::STATES.get_or_create(&labels).set(1f64);
 }
 
-fn update_sub_metric(mut labels: StateLabels, metric: &str, val: f64) {
-    labels.metric = Some(metric.to_string());
-    metrics::STATES.get_or_create(&labels).set(val);
+fn update_sub_metric(
+    mut labels: StateLabels,
+    metric: &str,
+    val: Option<f64>,
+    unit: Option<String>,
+) {
+    if let Some(val) = val {
+        labels.metric = Some(metric.to_string());
+        labels.unit_of_measurement = unit;
+        metrics::STATES.get_or_create(&labels).set(val);
+    }
 }
 
 /// Adds or updates the metric(s) for `entity`.
 pub fn add_or_update_entity(
-    config: &config::HomeAssistantConfig,
+    config: &config::HomeAssistantExporterConfig,
     entity: HassEntity,
     old_state: Option<HassEntity>,
 ) -> Option<()> {
@@ -289,6 +296,11 @@ pub fn add_or_update_entity(
     // Report unrecognised attributes to the log so that they aren't
     // just silently dropped.
     for (key, val) in &attributes.unknown {
+        for ignore in &config.home_assistant.ignore.attributes {
+            if ignore.applies_to_attr(domain, key) {
+                continue;
+            }
+        }
         warn!(
             "Unknown attribute '{}' for '{}': {}",
             key,
@@ -371,13 +383,83 @@ pub fn add_or_update_entity(
                 old_state_value,
                 None,
             );
+        } else if domain == "device_tracker" {
+            update_enum(
+                &mut labels,
+                state_value.to_string(),
+                old_state_value,
+                None,
+            );
         } else if domain == "sun" {
-            if let Some(azimuth) = attributes.sun_attrs.azimuth {
-                update_sub_metric(labels.clone(), "azimuth", azimuth);
-            }
-            if let Some(elevation) = attributes.sun_attrs.elevation {
-                update_sub_metric(labels.clone(), "elevation", elevation);
-            }
+            update_sub_metric(
+                labels.clone(),
+                "azimuth",
+                attributes.sun_attrs.azimuth,
+                Some("°".to_string()),
+            );
+
+            update_sub_metric(
+                labels.clone(),
+                "elevation",
+                attributes.sun_attrs.elevation,
+                Some("°".to_string()),
+            );
+
+            update_enum(
+                &mut labels,
+                state_value.to_string(),
+                old_state_value,
+                None,
+            );
+        } else if domain == "weather" {
+            update_sub_metric(
+                labels.clone(),
+                "cloud_coverage",
+                attributes.entity_attrs.weather.cloud_coverage,
+                Some("%".to_string()),
+            );
+
+            update_sub_metric(
+                labels.clone(),
+                "dew_point",
+                attributes.entity_attrs.weather.dew_point,
+                attributes.entity_attrs.weather.temperature_unit,
+            );
+
+            update_sub_metric(
+                labels.clone(),
+                "humidity",
+                attributes.entity_attrs.weather.humidity,
+                Some("%".to_string()),
+            );
+
+            update_sub_metric(
+                labels.clone(),
+                "pressure",
+                attributes.entity_attrs.weather.pressure,
+                attributes.entity_attrs.weather.pressure_unit,
+            );
+
+            update_sub_metric(
+                labels.clone(),
+                "uv_index",
+                attributes.entity_attrs.weather.uv_index,
+                None,
+            );
+
+            update_sub_metric(
+                labels.clone(),
+                "wind_bearing",
+                attributes.entity_attrs.weather.wind_bearing,
+                Some("°".to_string()),
+            );
+
+            update_sub_metric(
+                labels.clone(),
+                "wind_speed",
+                attributes.entity_attrs.weather.wind_speed,
+                attributes.entity_attrs.weather.wind_speed_unit,
+            );
 
             update_enum(
                 &mut labels,
@@ -392,6 +474,11 @@ pub fn add_or_update_entity(
                 state_value,
                 serde_json::to_string(&attributes).unwrap_or_default()
             );
+
+            if config.debug.unknown {
+                metrics::UNSAVED_ENTITIES.get_or_create(&labels).inc();
+            }
+
             return None;
         }
     } else {
@@ -399,6 +486,11 @@ pub fn add_or_update_entity(
             "Didn't know what to do with an event for '{}' without state.",
             entity_id
         );
+
+        if config.debug.unknown {
+            metrics::UNSAVED_ENTITIES.get_or_create(&labels).inc();
+        }
+
         return None;
     }
 
@@ -408,7 +500,7 @@ pub fn add_or_update_entity(
 /// Processes a "state_changed" event.
 // #[tracing::instrument]
 fn state_changed(
-    config: &config::HomeAssistantConfig,
+    config: &config::HomeAssistantExporterConfig,
     event: HassEvent,
 ) -> Option<()> {
     // Deconstruct the event data.
@@ -432,7 +524,10 @@ fn state_changed(
 }
 
 /// Processes a web socket event from Home Assistant.
-pub async fn process(config: &config::HomeAssistantConfig, message: WSEvent) {
+pub async fn process(
+    config: &config::HomeAssistantExporterConfig,
+    message: WSEvent,
+) {
     let event = message.event;
 
     metrics::EVENT_COUNTER

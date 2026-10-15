@@ -51,6 +51,10 @@ fn default_metric_port() -> u16 {
     return DEFAULT_METRIC_PORT;
 }
 
+fn default_metric_prefix() -> String {
+    return DEFAULT_METRIC_PREFIX.to_string();
+}
+
 #[derive(Debug, Deserialize)]
 pub struct ServerConfig {
     /// The address that the metrics server should listen at.
@@ -60,6 +64,10 @@ pub struct ServerConfig {
     /// The port that the metrics server should listen at.
     #[serde(default = "default_metric_port")]
     pub port: u16,
+
+    /// The prefix to use for metric names.
+    #[serde(default = "default_metric_prefix")]
+    pub prefix: String,
 }
 
 impl Default for ServerConfig {
@@ -67,9 +75,12 @@ impl Default for ServerConfig {
         Self {
             address: default_metric_address(),
             port: default_metric_port(),
+            prefix: default_metric_prefix(),
         }
     }
 }
+
+pub mod ha;
 
 #[derive(Debug, Deserialize)]
 pub struct HomeAssistantConfig {
@@ -80,6 +91,10 @@ pub struct HomeAssistantConfig {
     /// The hostname of the HA server.
     #[serde(default)]
     pub server: String,
+
+    /// What state changes to ignore.
+    #[serde(default)]
+    pub ignore: ha::IgnoreConfig,
 }
 
 impl Default for HomeAssistantConfig {
@@ -87,13 +102,19 @@ impl Default for HomeAssistantConfig {
         Self {
             token: Default::default(),
             server: DEFAULT_HA_SERVER.to_string(),
+            ignore: Default::default(),
         }
     }
 }
 
+pub mod debug;
+
 #[derive(Debug, Default, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct HomeAssistantExporterConfig {
+    #[serde(default)]
+    pub debug: debug::Config,
+
     /// The configuration for the metrics server.
     #[serde(default)]
     pub server: ServerConfig,

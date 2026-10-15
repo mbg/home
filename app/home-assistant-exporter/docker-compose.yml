@@ -7,6 +7,8 @@ services:
       - 9090:9090
   home-assisstant-exporter:
     build: .
+    volumes:
+      - ./config:/etc/home/config
     env_file:
       - exporter.env
     ports:
