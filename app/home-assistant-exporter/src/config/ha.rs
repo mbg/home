@@ -23,11 +23,11 @@ impl IgnoreAttributeConfig {
         }
 
         if let Some(d) = &self.domain
-            && d.eq(domain)
+            && !d.eq(domain)
         {
             return false;
         }
 
-        return false;
+        return true;
     }
 }
