@@ -10,6 +10,6 @@ services:
     volumes:
       - ./config:/etc/home/config
     env_file:
-      - exporter.env
+      - exporter.sample.env
     ports:
       - 8001:8001
