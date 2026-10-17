@@ -1,0 +1,18 @@
+{
+  "friendly_name": "Forecast Home",
+  "attribution": "Weather forecast from met.no, delivered by the Norwegian Meteorological Institute.",
+  "supported_features": 3.0,
+  "temperature": 11.6,
+  "temperature_unit": "°C",
+  "dew_point": 7.5,
+  "pressure": 1012.6,
+  "cloud_coverage": 37.5,
+  "precipitation_unit": "mm",
+  "wind_speed_unit": "km/h",
+  "wind_bearing": 136.2,
+  "visibility_unit": "km",
+  "pressure_unit": "hPa",
+  "humidity": 76,
+  "wind_speed": 13.3,
+  "uv_index": 0.0
+}

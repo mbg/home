@@ -1,0 +1,13 @@
+{
+  "friendly_name": "Test Device",
+  "ip": "192.168.0.1",
+  "host_name": "test",
+  "is_guest": false,
+  "authorized": true,
+  "tracking_type": "connection",
+  "in_zones": ["zone.home"],
+  "qos_policy_applied": true,
+  "source_type": "router",
+  "oui": "Private",
+  "mac": "00:00:00:00:00:00"
+}

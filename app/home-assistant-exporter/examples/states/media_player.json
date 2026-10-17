@@ -1,0 +1,27 @@
+{
+  "friendly_name": "Example TV",
+  "app_id": "com.google.ios.youtube",
+  "media_artist": "Channel name",
+  "media_title": "Video title",
+  "source_list": [
+    "App Store",
+    "Arcade",
+    "Computers",
+    "FaceTime",
+    "Fitness",
+    "Music",
+    "Photos",
+    "Podcasts",
+    "Search",
+    "Settings",
+    "TestFlight",
+    "TV",
+    "YouTube"
+  ],
+  "media_position": 1,
+  "media_album_name": "",
+  "app_name": "YouTube",
+  "volume_level": 0.5379999999999999,
+  "media_duration": 1200,
+  "media_position_updated_at": "2026-01-01T00:00:00.000000+00:00"
+}
