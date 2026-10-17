@@ -18,6 +18,10 @@ static ENV_VAR_SERVER_PORT: &str = "HOME_SERVER_PORT";
 /// of the Home Assistant server in.
 static ENV_VAR_HA_SERVER: &str = "HOME_HA_SERVER";
 
+/// The name of the environment variable that we expect the port
+/// of the Home Assistant server in.
+static ENV_VAR_HA_PORT: &str = "HOME_HA_PORT";
+
 /// The name of the environment variable that we expect the API token
 /// for the Home Assistant instance in.
 static ENV_VAR_HA_TOKEN: &str = "HOME_HA_TOKEN";
@@ -32,6 +36,9 @@ pub static DEFAULT_METRIC_ADDRESS: std::net::Ipv4Addr =
 
 /// The default hostname for the HA server.
 static DEFAULT_HA_SERVER: &str = "homeassistant.local";
+
+/// The default port for the HA server.
+pub static DEFAULT_HA_PORT: u16 = 8123;
 
 /// The default prefix for prometheus metrics.
 pub static DEFAULT_METRIC_PREFIX: &str = "ha";
@@ -82,6 +89,14 @@ impl Default for ServerConfig {
 
 pub mod ha;
 
+fn default_ha_server() -> String {
+    return DEFAULT_HA_SERVER.to_string();
+}
+
+fn default_ha_port() -> u16 {
+    return DEFAULT_HA_PORT;
+}
+
 #[derive(Debug, Deserialize)]
 pub struct HomeAssistantConfig {
     /// The long-lived token to authenticate to HA with.
@@ -89,8 +104,12 @@ pub struct HomeAssistantConfig {
     pub token: String,
 
     /// The hostname of the HA server.
-    #[serde(default)]
+    #[serde(default = "default_ha_server")]
     pub server: String,
+
+    /// The port number of the HA server.
+    #[serde(default = "default_ha_port")]
+    pub port: u16,
 
     /// What state changes to ignore.
     #[serde(default)]
@@ -102,6 +121,7 @@ impl Default for HomeAssistantConfig {
         Self {
             token: Default::default(),
             server: DEFAULT_HA_SERVER.to_string(),
+            port: DEFAULT_HA_PORT,
             ignore: Default::default(),
         }
     }
@@ -226,6 +246,9 @@ pub fn home_assistant_config_from_env(
 
     if let Some(server) = optional_env_var(ENV_VAR_HA_SERVER) {
         config.server = server;
+    }
+    if let Some(port) = optional_env_var(ENV_VAR_HA_PORT) {
+        config.port = port;
     }
 
     return Ok(());

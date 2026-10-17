@@ -1,7 +1,10 @@
 use clap::Parser;
 use hass_rs::HassClient;
 use std::{error::Error, process::ExitCode};
-use tokio::sync::watch;
+use tokio::{
+    sync::watch::{self, Sender},
+    task::JoinHandle,
+};
 use tracing::{error, info, level_filters::LevelFilter};
 use tracing_subscriber::EnvFilter;
 
@@ -40,6 +43,70 @@ fn init_tracing_subscriber()
     // Construct a global tracing subscriber based on the filter.
     let subscriber = json_subscriber::fmt();
     return subscriber.with_env_filter(filter).try_init();
+}
+
+#[derive(Debug)]
+enum HomeAssistantFailure {
+    UnableToConnect,
+    UnableToSubscribe,
+}
+
+fn ha_loop(
+    config: config::HomeAssistantExporterConfig,
+    tx: Sender<bool>,
+) -> JoinHandle<Result<(), HomeAssistantFailure>> {
+    return tokio::spawn(async move {
+        // Initialise the Home Assistant web socket client. The `connect` function
+        // implements a retry strategy and will attempt to connect multiple times.
+        let mut ha_client: HassClient;
+        match ha::connect(&config.home_assistant).await {
+            None => {
+                return Err(HomeAssistantFailure::UnableToConnect);
+            }
+            Some(client) => ha_client = client,
+        }
+
+        info!("Successfully connected to Home Assistant.");
+        info!("Fetching current states from Home Assistant.");
+
+        // Synchronise the current entity states.
+        match ha_client.get_states().await {
+            Err(err) => {
+                error!("Unable to fetch initial states from HA: {}", err)
+            }
+            Ok(entities) => {
+                for ent in entities {
+                    let _ = ha::event::add_or_update_entity(&config, ent, None);
+                }
+            }
+        }
+
+        // Subscribe to `state_changed` events from Home Assistant.
+        let mut event_receiver;
+        match ha_client.subscribe_event("state_changed").await {
+            Err(err) => {
+                error!(
+                    "Failed to subscribe to `state_changed` events: {}",
+                    err
+                );
+                return Err(HomeAssistantFailure::UnableToSubscribe);
+            }
+            Ok(receiver) => event_receiver = receiver,
+        };
+
+        info!(
+            "Successfully subscribed to `state_changed` events and started listening for them."
+        );
+        let _ = tx.send(true);
+
+        // Spawn a task to handle events we receive from Home Assistant.
+        while let Some(message) = event_receiver.recv().await {
+            ha::event::process(&config, message).await;
+        }
+
+        info!("Connection to Home Assistant has been closed.");
+        return Ok(());
+    });
 }
 
 #[tokio::main]
@@ -89,57 +156,23 @@ async fn main() -> ExitCode {
         Some(listener) => metrics_listener = listener,
     }
 
-    // Initialise the Home Assistant web socket client.
-    let mut ha_client: HassClient;
-    match ha::connect(&config.home_assistant).await {
-        None => return ExitCode::FAILURE,
-        Some(client) => ha_client = client,
-    }
-
-    info!("Successfully connected to Home Assistant.");
-    info!("Fetching current states from Home Assistant.");
-
-    // Synchronise the current entity states.
-    match ha_client.get_states().await {
-        Err(err) => {
-            error!("Unable to fetch initial states from HA: {}", err)
-        }
-        Ok(entities) => {
-            for ent in entities {
-                let _ = ha::event::add_or_update_entity(&config, ent, None);
-            }
-        }
-    }
-
-    // Subscribe to `state_changed` events from Home Assistant.
-    let mut event_receiver;
-    match ha_client.subscribe_event("state_changed").await {
-        Err(err) => {
-            error!("Failed to subscribe to `state_changed` events: {}", err);
-            return ExitCode::FAILURE;
-        }
-        Ok(receiver) => event_receiver = receiver,
-    };
-
-    // Spawn a task to handle events we receive from Home Assistant.
-    let event_listener = tokio::spawn(async move {
-        while let Some(message) = event_receiver.recv().await {
-            ha::event::process(&config, message).await;
-        }
-        info!("Connection to Home Assistant has been closed.");
-    });
-
-    info!(
-        "Successfully subscribed to `state_changed` events and started listening for them."
-    );
-    let _ = tx.send(true);
+    let ha_loop_listener = ha_loop(config, tx);
 
     // Wait for any one of the tasks to complete.
     tokio::select! {
-        event_result = event_listener => {
-            if let Err(error) = event_result {
-                error!("Error while waiting for the event listener: {}", error);
-                return ExitCode::FAILURE;
+        ha_loop_result = ha_loop_listener => {
+            match ha_loop_result {
+                Ok(ha_result) => match ha_result {
+                    Ok(_) => {},
+                    Err(result) => {
+                        error!("Home Assistant loop did not complete successfully: {:?}", result);
+                        return ExitCode::FAILURE;
+                    },
+                },
+                Err(error) => {
+                    error!("Error while waiting for the Home Assistant loop: {}", error);
+                    return ExitCode::FAILURE;
+                },
             }
         },
         metrics_result = metrics_listener => {

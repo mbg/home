@@ -5,11 +5,18 @@ services:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
     ports:
       - 9090:9090
+  home-assistant:
+    image: ghcr.io/home-assistant/home-assistant:2026.10.1
+    ports:
+      - 8123:8123
+    volumes:
+      - ./dev/ha/configuration.test.yaml:/config/configuration.yaml:ro
+      - ./dev/ha/.storage:/config/.storage/:ro
   home-assisstant-exporter:
     build: .
     volumes:
       - ./config:/etc/home/config
     env_file:
-      - exporter.env
+      - exporter.sample.env
     ports:
       - 8001:8001

@@ -1,0 +1,16 @@
+{
+  "entity_id": "climate.test",
+  "last_changed": "2026-01-01T00:00:00.000000+00:00",
+  "state": "heat",
+  "attributes": {
+    "current_temperature": 20.3,
+    "friendly_name": "Test Climate",
+    "hvac_action": "idle",
+    "hvac_modes": ["heat", "off"],
+    "max_temp": 22.0,
+    "min_temp": 17.0,
+    "supported_features": 385,
+    "target_temp_step": 0.1,
+    "temperature": 20.0
+  }
+}
