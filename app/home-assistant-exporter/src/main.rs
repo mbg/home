@@ -45,17 +45,23 @@ fn init_tracing_subscriber()
     return subscriber.with_env_filter(filter).try_init();
 }
 
+#[derive(Debug)]
+enum HomeAssistantFailure {
+    UnableToConnect,
+    UnableToSubscribe,
+}
+
 fn ha_loop(
     config: config::HomeAssistantExporterConfig,
     tx: Sender<bool>,
-) -> JoinHandle<()> {
+) -> JoinHandle<Result<(), HomeAssistantFailure>> {
     return tokio::spawn(async move {
         // Initialise the Home Assistant web socket client. The `connect` function
         // implements a retry strategy and will attempt to connect multiple times.
         let mut ha_client: HassClient;
         match ha::connect(&config.home_assistant).await {
             None => {
-                return;
+                return Err(HomeAssistantFailure::UnableToConnect);
             }
             Some(client) => ha_client = client,
         }
@@ -83,7 +89,7 @@ fn ha_loop(
                     "Failed to subscribe to `state_changed` events: {}",
                     err
                 );
-                return;
+                return Err(HomeAssistantFailure::UnableToSubscribe);
             }
             Ok(receiver) => event_receiver = receiver,
         };
@@ -99,6 +105,7 @@ fn ha_loop(
         }
 
         info!("Connection to Home Assistant has been closed.");
+        return Ok(());
     });
 }
 
@@ -154,9 +161,18 @@ async fn main() -> ExitCode {
     // Wait for any one of the tasks to complete.
     tokio::select! {
         ha_loop_result = ha_loop_listener => {
-            if let Err(error) = ha_loop_result {
-                error!("Error while waiting for the Home Assistant loop: {}", error);
-                return ExitCode::FAILURE;
+            match ha_loop_result {
+                Ok(ha_result) => match ha_result {
+                    Ok(_) => {},
+                    Err(result) => {
+                        error!("Home Assistant loop did not complete successfully: {:?}", result);
+                        return ExitCode::FAILURE;
+                    },
+                },
+                Err(error) => {
+                    error!("Error while waiting for the Home Assistant loop: {}", error);
+                    return ExitCode::FAILURE;
+                },
             }
         },
         metrics_result = metrics_listener => {
