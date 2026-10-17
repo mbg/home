@@ -9,13 +9,13 @@ name = "home-assistant-exporter"
 path = "src/main.rs"
 
 [dependencies]
-chrono = "0.4.45"
 clap = { version = "4.6.7", features = ["derive"] }
 futures = "0.3.34"
 hass-rs = "0.5.0"
 http-body-util = "0.1.5"
 hyper = { version = "1.11.1", features = ["server", "http1"] }
 hyper-util = { version = "0.1.21", features = ["tokio"] }
+jiff = "0.2.38"
 json-subscriber = { version = "0.3.0", features = ["env-filter", "valuable"] }
 prometheus-client = "0.25.1"
 serde = "1.0.229"
