@@ -1,0 +1,75 @@
+{
+    "version": 1,
+    "minor_version": 1,
+    "key": "auth",
+    "data": {
+        "users": [
+            {
+                "id": "cabed29d0b6940cfaaeb817ec638174b",
+                "group_ids": [
+                    "system-read-only"
+                ],
+                "is_owner": false,
+                "is_active": true,
+                "name": "Home Assistant Content",
+                "system_generated": true,
+                "local_only": false
+            },
+            {
+                "id": "a8c0c03196514ec18c62c0947be3080c",
+                "group_ids": [
+                    "system-admin"
+                ],
+                "is_owner": true,
+                "is_active": true,
+                "name": "HA Test Instance",
+                "system_generated": false,
+                "local_only": false
+            }
+        ],
+        "groups": [
+            {
+                "id": "system-admin",
+                "name": "Administrators"
+            },
+            {
+                "id": "system-users",
+                "name": "Users"
+            },
+            {
+                "id": "system-read-only",
+                "name": "Read Only"
+            }
+        ],
+        "credentials": [
+            {
+                "id": "d5772814e50f4d98875b2471d9bad57e",
+                "user_id": "a8c0c03196514ec18c62c0947be3080c",
+                "auth_provider_type": "homeassistant",
+                "auth_provider_id": null,
+                "data": {
+                    "username": "test"
+                }
+            }
+        ],
+        "refresh_tokens": [
+            {
+                "id": "608688627aa943fd89dc1fd321e8e2d6",
+                "user_id": "a8c0c03196514ec18c62c0947be3080c",
+                "client_id": null,
+                "client_name": "test",
+                "client_icon": null,
+                "token_type": "long_lived_access_token",
+                "created_at": "2999-12-31T00:00:00.000000+00:00",
+                "access_token_expiration": 315360000,
+                "token": "9a1638bd244d390a8dd6c102e2b702c960b4f5e0f7e4adb509e5f589decc374f8d666b04f1d706d23e166f6f56cbe959508626ebcb1727adb1e60688401ac8d3",
+                "jwt_key": "ec133f5092fcf308327fd35eb5c2b9ecd7b6b8dc5708e94bd01fb89580538fa339e991097a97e182da05d1a70c97390791f763e55fc495f8f5c8513ba4fb8c90",
+                "last_used_at": "2999-12-31T00:00:00.000000+00:00",
+                "last_used_ip": null,
+                "expire_at": null,
+                "credential_id": null,
+                "version": "2026.10.1"
+            }
+        ]
+    }
+}
