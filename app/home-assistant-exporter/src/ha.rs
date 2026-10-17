@@ -61,7 +61,8 @@ async fn attempt_auth(
 
 pub async fn connect(config: &HomeAssistantConfig) -> Option<HassClient> {
     let server = &config.server;
-    let url: String = format!("ws://{server}/api/websocket");
+    let port = &config.port;
+    let url: String = format!("ws://{server}:{port}/api/websocket");
 
     // base^retry * factor
     // See https://github.com/djc/tokio-retry/issues/22
