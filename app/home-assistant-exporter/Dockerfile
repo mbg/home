@@ -6,7 +6,9 @@ RUN apt-get update && \
 FROM rust:1.99 AS builder
 WORKDIR /usr/src/home-assistant-exporter
 COPY . .
-RUN cargo install --path .
+RUN --mount=type=cache,target=/usr/local/cargo/registry \
+    --mount=type=cache,target=/usr/src/home-assistant-exporter/target \
+    cargo install --path .
 
 FROM base
 COPY --from=builder \
