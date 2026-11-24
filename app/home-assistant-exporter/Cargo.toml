@@ -17,7 +17,7 @@ hyper = { version = "1.11.1", features = ["server", "http1"] }
 hyper-util = { version = "0.1.21", features = ["tokio"] }
 jiff = "0.2.38"
 json-subscriber = { version = "0.3.0", features = ["env-filter", "valuable"] }
-prometheus-client = "0.25.1"
+prometheus-client = "0.26.0"
 serde = "1.0.229"
 serde_json = "1.0.151"
 serde_yaml = "0.9.34"
